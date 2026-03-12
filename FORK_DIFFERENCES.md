@@ -58,21 +58,11 @@ CAMS → EXR/PNG image sequence exporter for DCC and realtime engines (e.g. Unre
 
 ## 4. Docker
 
-### `docker/` — **new** (entirely fork-specific)
+Uses upstream's `serve/Dockerfile` (NVIDIA PyTorch base image with GPU support). Fork changes:
 
-| File | Purpose |
-|------|---------|
-| `docker/Dockerfile` | Lightweight container (Python 3.12-slim, uv, eccodes) — no GPU required |
-| `docker/docker-compose.yml` | Services: `export-rgba`, `export-volume`, `shell` |
-| `docker/docker-compose.override.yml` | Windows-specific volume mounts (`.cdsapirc` path) |
-
-```bash
-docker compose -f docker/docker-compose.yml up export-rgba    # RGBA export (3 days)
-docker compose -f docker/docker-compose.yml up export-volume   # 3D volume
-docker compose -f docker/docker-compose.yml run --rm shell     # debugging
-```
-
-Cache and output are mounted as volumes (`.cache/`, `outputs/`).
+- `pip` → `uv` migration (no redundant pip upgrade, no curl uv install)
+- `apt` cache cleanup in same RUN layer
+- CAMS dependencies included via `[data]` extra in `pyproject.toml`
 
 ---
 
@@ -114,4 +104,4 @@ Files that only exist in this fork:
 
 ---
 
-**Last Updated:** 2026-03-11
+**Last Updated:** 2026-03-12
