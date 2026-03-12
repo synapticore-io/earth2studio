@@ -1,0 +1,13 @@
+.git
+.venv
+__pycache__
+*.pyc
+outputs/
+.cache/
+test/
+docs/
+examples/
+recipes/
+serve/
+.tox/
+*.egg-info/

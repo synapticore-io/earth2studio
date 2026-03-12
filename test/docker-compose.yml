@@ -1,0 +1,24 @@
+services:
+  test-data:
+    build:
+      context: ..
+      dockerfile: test/Dockerfile
+    volumes:
+      - ..:/app
+      - ~/.cdsapirc:/root/.cdsapirc:ro
+    environment:
+      UV_PROJECT_ENVIRONMENT: /tmp/e2s-venv
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        cd /app
+        uv sync --extra data --group dev --group docs 2>&1 | tail -3
+        uv run pytest test/data test/lexicon \
+          -v -s --slow --timeout=180

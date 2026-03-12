@@ -319,7 +319,8 @@ dev = [
     "ruff",
     "pytest-asyncio>=0.26.0",
     "tox>=4.32.0",
-    "tox-uv>=1.29.0"
+    "tox-uv>=1.29.0",
+    "cdsapi>=0.7.5",
 ]
 docs = [
     "cartopy",

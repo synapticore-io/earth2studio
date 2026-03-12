@@ -3,8 +3,8 @@
 
 # NVIDIA Earth2Studio
 
-> **Fork Information:** This is a community fork maintained by [synapticore](https://github.com/synapticore).
-> For the official NVIDIA repository, see [NVIDIA/earth2studio](https://github.com/NVIDIA/earth2studio).
+> **Fork:** Maintained by [synapticore](https://github.com/synapticore-io) — focused on CAMS/atmospheric composition and data-driven weather & climate visualization.
+> Upstream: [NVIDIA/earth2studio](https://github.com/NVIDIA/earth2studio)
 
 [![python version][e2studio_python_img]][e2studio_python_url]
 [![license][e2studio_license_img]][e2studio_license_url]
@@ -94,27 +94,30 @@ run(["2025-01-01T00:00:00"], 4, model, data, io)
 
 [![Watch the video](https://img.youtube.com/vi/Sog6aCapZeA/hqdefault.jpg)](https://www.youtube.com/watch?v=Sog6aCapZeA)
 
-## Fork-Specific Features and Documentation
+## Fork: CAMS & Atmospheric Composition
 
-This fork provides additional resources and documentation to help users get started,
-especially those working with limited hardware resources or offline environments:
+This fork extends Earth2Studio with a focus on **ECMWF/CAMS data** and **atmospheric composition forecasting** (dust, aerosols, air quality).
 
-- **[Fork Maintenance Guide](FORK_GUIDE.md)** - Best practices for maintaining this fork
-- **[Local Deployment Guide](LOCAL_DEPLOYMENT.md)** - Complete guide for offline/air-gapped deployment
-- **[GPU Optimization Guide](GPU_OPTIMIZATION.md)** - Run models on consumer GPUs (8-16GB)
-- **[Known Issues](KNOWN_ISSUES.md)** - Common problems and workarounds
-- **[Roadmap](ROADMAP.md)** - Fork development plan and goals
-- **[Security Policy](SECURITY.md)** - Security guidelines and vulnerability reporting
+### What's Different
 
-### Fork Philosophy
+- **CAMS DataSource** (`earth2studio.data.CAMS`, `CAMS_FX`) — EU surface analysis + global column/AOD forecasts via CDS API
+- **CAMS Lexicon** — unified variable mapping for dust, SO₂, PM2.5, PM10, NO₂, O₃, CO, NH₃, AOD550 and more
+- **Reproducible workflows** — stable pipelines for ECMWF/CAMS & reanalysis/forecast data
 
-This fork focuses on:
-- **Accessibility** - Making AI weather models available on consumer hardware
-- **Documentation** - Comprehensive guides for various deployment scenarios
-- **Optimization** - Memory and performance improvements for limited resources
-- **Community** - Building a supportive community around Earth2Studio
+### Fork Strategy
 
-We actively sync with upstream NVIDIA/earth2studio and aim to contribute improvements back when appropriate.
+- **Close to upstream:** regularly synced with NVIDIA/earth2studio
+- **Fork-specific features** in separate modules (new DataSources, Lexicon extensions, Docker/CI)
+- **Well documented:** all differences from upstream clearly marked
+
+### Documentation
+
+- **[Fork Differences](FORK_DIFFERENCES.md)** — what exactly differs (DataSources, Lexicon, Docker, scripts)
+- **[Roadmap](ROADMAP.md)** — fork vision and next steps
+- **[Fork Maintenance Guide](FORK_GUIDE.md)** — sync workflow and best practices
+- **[Local Deployment Guide](LOCAL_DEPLOYMENT.md)** — offline/air-gapped setup
+- **[GPU Optimization Guide](GPU_OPTIMIZATION.md)** — consumer GPU tips
+- **[Known Issues](KNOWN_ISSUES.md)** — known problems and workarounds
 
 ## Latest News
 

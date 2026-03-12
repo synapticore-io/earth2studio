@@ -28,7 +28,6 @@ from datetime import datetime, timedelta, timezone
 import gcsfs
 import nest_asyncio
 import numpy as np
-import pygrib
 import s3fs
 import xarray as xr
 from fsspec.implementations.http import HTTPFileSystem
@@ -46,6 +45,12 @@ from earth2studio.utils.imports import (
     check_optional_dependencies,
 )
 from earth2studio.utils.type import LeadTimeArray, TimeArray, VariableArray
+
+try:
+    import pygrib
+except ImportError:
+    OptionalDependencyFailure("data")
+    pygrib = None
 
 try:
     import pyproj

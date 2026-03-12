@@ -28,7 +28,6 @@ from datetime import datetime, timedelta
 from typing import Any, Literal
 
 import numpy as np
-import pygrib
 import xarray as xr
 from loguru import logger
 from tqdm.asyncio import tqdm
@@ -41,6 +40,12 @@ from earth2studio.utils.imports import (
     check_optional_dependencies,
 )
 from earth2studio.utils.type import LeadTimeArray, TimeArray, VariableArray
+
+try:
+    import pygrib
+except ImportError:
+    OptionalDependencyFailure("data")
+    pygrib = None
 
 try:
     import ecmwf.opendata as opendata

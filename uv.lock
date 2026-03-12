@@ -1859,6 +1859,7 @@ build = [
 ]
 dev = [
     { name = "black" },
+    { name = "cdsapi" },
     { name = "coverage" },
     { name = "hatch" },
     { name = "interrogate" },
@@ -2099,6 +2100,7 @@ build = [
 ]
 dev = [
     { name = "black", specifier = "==24.1.0" },
+    { name = "cdsapi", specifier = ">=0.7.5" },
     { name = "coverage", specifier = ">=6.5.0" },
     { name = "hatch", specifier = ">=1.14.0" },
     { name = "interrogate", specifier = ">=1.5.0" },

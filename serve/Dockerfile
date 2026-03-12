@@ -1,7 +1,6 @@
 FROM nvcr.io/nvidia/pytorch:26.01-py3
 
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
-RUN python -m pip install --no-cache-dir --upgrade pip
 
 ENV NGC_CLI_ORG=no-org
 ENV NGC_CLI_TEAM=no-team
@@ -28,14 +27,13 @@ RUN uv pip install --system --break-system-packages "earth2studio[data,perturbat
 RUN uv pip install --system --break-system-packages cartopy xskillscore matplotlib
 
 # Install the requirements for stormcast.
-RUN pip uninstall -y torch-harmonics && \
+RUN uv pip uninstall --system torch-harmonics && \
     FORCE_CUDA_EXTENSION=1 uv pip install --system --break-system-packages --no-build-isolation torch-harmonics==0.8.0
 
 # Install the requirements for the inference server.
 COPY . /workspace/earth2studio-project/
 RUN ln -s /outputs /workspace/earth2studio-project/examples/outputs
-RUN apt-get update && apt-get install -y redis-server && \
-    curl -LsSf https://astral.sh/uv/install.sh | sh && source $HOME/.local/bin/env && \
+RUN apt-get update && apt-get install -y redis-server && rm -rf /var/lib/apt/lists/* && \
     cd /workspace/earth2studio-project && \
     uv pip install --system --break-system-packages -e . && \
     uv pip install --system --break-system-packages -e ".[stormcast]" && \

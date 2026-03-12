@@ -24,6 +24,7 @@ Used for fetching initial conditions for inference and validation data for scori
    :template: datasource.rst
 
    data.ARCO
+   data.CAMS
    data.CDS
    data.CMIP6
    data.CMIP6MultiRealm
@@ -64,6 +65,7 @@ Typically used in intercomparison workflows.
 
    data.AIFS_FX
    data.AIFS_ENS_FX
+   data.CAMS_FX
    data.GFS_FX
    data.GEFS_FX
    data.GEFS_FX_721x1440
