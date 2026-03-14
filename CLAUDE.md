@@ -49,6 +49,7 @@ Config: `serve/server/conf/config.yaml`. Custom Workflows via `WORKFLOW_DIR` env
 - **Erststart langsam**: ~3-5 min weil 4 Uvicorn Workers + RQ Worker parallel alle ML-Module importieren (PyTorch, CUDA, earth2studio models).
 - **PyTorch SHMEM**: Container braucht `ipc: host` und `ulimits` (memlock, stack), sonst PyTorch-Fehler.
 - **SFNO/CuPy CUDA 13**: Container (nvcr.io/nvidia/pytorch:26.01) hat CUDA 13.1, CuPy sucht `libnvrtc.so.12`. SFNO-basierte Workflows (Cyclone Tracking) funktionieren nicht bis CuPy aktualisiert wird.
+- **FCN3/StormCast OOM**: `stormcast_fcn3_workflow` braucht mehr VRAM als eine einzelne Consumer-GPU bietet. Braucht ≥40 GB (A6000/H100).
 - **Cyclone Tracker Variablen**: TCTrackerWuDuan braucht `u850, v850, u10m, v10m, msl` (721 lat) — nur SFNO liefert das. FCN hat 720 lat, DLWP fehlen Wind-Vars.
 - **fetch_data → map_coords**: `fetch_data()` liefert GFS-Koordinaten (721 lat), aber FCN erwartet 720. Bei custom Workflows nach `fetch_data` immer `map_coords(x, coords, model.input_coords())` aufrufen.
 
@@ -57,15 +58,15 @@ Config: `serve/server/conf/config.yaml`. Custom Workflows via `WORKFLOW_DIR` env
 | Workflow | Modell | Getestet |
 |----------|--------|----------|
 | `cams_analysis` | CAMS EU (0.1°, 6 Vars) | ja |
-| `cams_forecast` | CAMS_FX EU+Global | — |
+| `cams_forecast` | CAMS_FX EU+Global | ja |
 | `ensemble_forecast` | FCN + SphericalGaussian | ja |
 | `precipitation_forecast` | FCN + PrecipitationAFNO | ja |
 | `corrdiff_taiwan` | CorrDiffTaiwan (3km) | ja |
 | `deterministic_earth2_workflow` | FCN/DLWP | ja |
-| `deterministic_fcn_workflow` | FCN | — |
-| `deterministic_workflow` | FCN/DLWP + Plot | — |
-| `diagnostic_workflow` | FCN/DLWP + PrecipAFNO + Plot | — |
-| `stormcast_fcn3_workflow` | FCN3 + StormCast | — |
+| `deterministic_fcn_workflow` | FCN | ja |
+| `deterministic_workflow` | FCN/DLWP + Plot | ja |
+| `diagnostic_workflow` | FCN/DLWP + PrecipAFNO + Plot | ja |
+| `stormcast_fcn3_workflow` | FCN3 + StormCast | OOM |
 | `example_user_workflow` | Warmup/Template | ja |
 
 ## Client-SDK
