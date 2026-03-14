@@ -1,0 +1,41 @@
+services:
+  earth2studio-serve:
+    image: earth2studio-serve:latest
+    build:
+      context: ..
+      dockerfile: serve/Dockerfile
+    container_name: earth2studio-serve
+    ports:
+      - "8000:8000"
+    volumes:
+      - earth2cache:/workspace/data/earth2cache
+      - outputs:/outputs
+      - ./server/example_workflows:/workspace/custom_workflows:ro
+      - ${CDSAPI_RC:-C:/Users/bjoern/.cdsapirc}:/root/.cdsapirc:ro
+    environment:
+      - EARTH2STUDIO_CACHE=/workspace/data/earth2cache
+      - WORKFLOW_DIR=/workspace/custom_workflows
+      - CUDA_VISIBLE_DEVICES=0
+      - LOG_LEVEL=INFO
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ipc: host
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+volumes:
+  earth2cache:
+  outputs:

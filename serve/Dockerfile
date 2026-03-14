@@ -21,7 +21,7 @@ RUN uv pip install --system --break-system-packages natten==0.21.5+torch2100cu13
 RUN uv pip install --system --break-system-packages cartopy xskillscore matplotlib
 
 # Install the requirements for stormcast.
-RUN uv pip uninstall --system torch-harmonics && \
+RUN uv pip uninstall --system --break-system-packages torch-harmonics && \
     FORCE_CUDA_EXTENSION=1 uv pip install --system --break-system-packages --no-build-isolation torch-harmonics==0.8.0
 
 # Copy the serve collateral (scripts, config, etc.) and setup env.

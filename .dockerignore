@@ -1,14 +1,10 @@
 .git
 .venv
+.claude
 __pycache__
 *.pyc
 outputs/
 .cache/
-test/
-docs/
-examples/
-recipes/
-serve/
 .tox/
 *.egg-info/
 node_modules/
