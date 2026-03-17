@@ -34,6 +34,7 @@ climate science.
 
 Running AI weather prediction can be done with just a few lines of code.
 
+- **Windows:** See [Windows Installation](docs/install-windows.md) for pygrib/ECCODES setup.
 - For detailed installation steps, including model-specific installations, see the
     [install guide][e2studio_install_url].
 - See the [examples][e2studio_examples_url] gallery providing different inference
@@ -110,11 +111,36 @@ This fork extends Earth2Studio with a focus on **ECMWF/CAMS data** and **atmosph
 - **Fork-specific features** in separate modules (new DataSources, Lexicon extensions, Docker/CI)
 - **Well documented:** all differences from upstream clearly marked
 
+### Windows Support
+
+Earth2Studio runs on **Windows**. GRIB data sources (GFS, HRRR, ECMWF, etc.) require **pygrib**, which needs the ECCODES C library. Two options:
+
+| Option | Effort | Use when |
+|--------|--------|----------|
+| **Pre-built wheels** | None | Release has Windows wheels attached — `pip install` the matching wheel, then `uv sync` |
+| **Self-build** | ~15 min once | No wheels yet — build ECCODES from source, then `uv sync` |
+
+See **[Windows Installation](docs/install-windows.md)** for step-by-step instructions.
+
+### Workspace
+
+The repo uses a [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/) with `serve/client` as a member. The REST API client (`earth2studio-serve-client`) lives there:
+
+```bash
+uv sync                                    # root + workspace
+uv sync --package earth2studio-serve-client # install client
+uv run --package earth2studio-serve-client python -c "from earth2studio.serve.client.e2client import RemoteEarth2Workflow; ..."
+```
+
+See **[serve/client/README.md](serve/client/README.md)** for the client SDK docs.
+
 ### Documentation
 
 - **[Fork Differences](FORK_DIFFERENCES.md)** — what exactly differs (DataSources, Lexicon, Docker, scripts)
 - **[Roadmap](ROADMAP.md)** — fork vision and next steps
 - **[Fork Maintenance Guide](FORK_GUIDE.md)** — sync workflow and best practices
+- **[Windows Installation](docs/install-windows.md)** — ECCODES + pygrib setup (wheels or self-build)
+- **[serve/client/README.md](serve/client/README.md)** — REST API client SDK
 - **[Local Deployment Guide](LOCAL_DEPLOYMENT.md)** — offline/air-gapped setup
 - **[GPU Optimization Guide](GPU_OPTIMIZATION.md)** — consumer GPU tips
 - **[Known Issues](KNOWN_ISSUES.md)** — known problems and workarounds

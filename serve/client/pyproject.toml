@@ -44,13 +44,16 @@ dependencies = [
     "xarray>=0.19.0",
 ]
 
+[tool.uv.sources]
+earth2studio = { workspace = true }
+
 [project.optional-dependencies]
 e2studio = [
-    "torch>=2.10.0",
+    "torch>=2.9.0",
 ]
 examples = [
     "matplotlib>=3.3.0",
-    "nvidia-physicsnemo>=1.0.1,<2.0",
+    "nvidia-physicsnemo>=2.0",
     "omegaconf>=2.3.0",
     "pytz",
 ]
@@ -62,7 +65,7 @@ source = "uv-dynamic-versioning"
 packages = ["earth2studio/serve/client"]
 
 [tool.hatch.build.targets.wheel.sources]
-"earth2studio/serve/client" = "earth2studio/serve/client"
+"earth2studio/serve/client" = "../../earth2studio/serve/client"
 
 [tool.uv-dynamic-versioning]
 vcs = "git"
@@ -75,8 +78,8 @@ Documentation = "https://nvidia.github.io/earth2studio/"
 Repository = "https://github.com/NVIDIA/earth2studio"
 "Bug Reports" = "https://github.com/NVIDIA/earth2studio/issues"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=6.0",
     "pytest-cov>=2.0",
     "black>=21.0",

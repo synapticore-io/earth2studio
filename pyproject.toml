@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "earth2studio"
 authors = [
   { name="NVIDIA PhysicsNeMo Team" },
+  { name="Synapticore Team", url="https://synapticore.io" },
 ]
 description = "Open-source deep-learning framework for exploring, building and deploying AI weather/climate workflows."
 readme = "README.md"
@@ -22,6 +23,7 @@ dependencies = [
     "netCDF4>=1.6.4,<1.7.3", # https://github.com/Unidata/netcdf4-python/issues/1438
     "nest_asyncio",
     "pygrib",
+    "pyproj>=3.7.1",
     "python-dotenv",
     "pandas<3.0", # https://github.com/esgf2-us/intake-esgf/issues/167
     "pyarrow>=14.0.0",
@@ -71,7 +73,7 @@ data = [
     "httpx==0.28.1",
     "rasterio>=1.3.9",
     "rioxarray>=0.15.5",
-    "pyproj>=3.7.1", # TODO: pygrib imports this, so technically in core, to check
+    "pyproj>=3.7.1", # also in core (pygrib, HRRR)
     "scipy>=1.15.2",
     "multi-storage-client[boto3,google-cloud-storage,fsspec]>=0.33.0",
 ]
@@ -312,6 +314,9 @@ name = "pytorch-cu128"
 url = "https://download.pytorch.org/whl/cu128"
 explicit = true
 
+[tool.uv.workspace]
+members = ["serve/client"]
+
 [exclude.uv.workspace]
 members = ["recipes/*"]
 
@@ -341,6 +346,7 @@ dev = [
     "tox>=4.32.0",
     "tox-uv>=1.29.0",
     "cdsapi>=0.7.5",
+    "pip>=26.0.1",
 ]
 docs = [
     "cartopy",
@@ -356,6 +362,10 @@ docs = [
     "sphinx-favicon>=1.0.1",
     "nvidia-sphinx-theme"
 ]
+
+[tool.marimo.runtime]
+pythonpath = ["."]
+output_max_bytes = 100_000_000
 
 [tool.hatch.version]
 path = "earth2studio/__init__.py"

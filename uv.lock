@@ -41,6 +41,12 @@ conflicts = [[
     { package = "earth2studio", extra = "sfno" },
 ]]
 
+[manifest]
+members = [
+    "earth2studio",
+    "earth2studio-serve-client",
+]
+
 [[package]]
 name = "absl-py"
 version = "2.4.0"
@@ -1598,6 +1604,7 @@ dependencies = [
     { name = "pandas" },
     { name = "pyarrow" },
     { name = "pygrib" },
+    { name = "pyproj" },
     { name = "python-dotenv" },
     { name = "rich" },
     { name = "s3fs" },
@@ -1675,8 +1682,8 @@ all = [
     { name = "scikit-image" },
     { name = "scipy" },
     { name = "timm" },
-    { name = "torch-harmonics", version = "0.8.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-12-earth2studio-ace2'" },
-    { name = "torch-harmonics", version = "0.8.1", source = { git = "https://github.com/NVIDIA/torch-harmonics.git?rev=a632ca748a12bd9f74dbc1e00653317810991f74#a632ca748a12bd9f74dbc1e00653317810991f74" }, marker = "extra == 'extra-12-earth2studio-atlas' or extra == 'extra-12-earth2studio-fcn3' or extra == 'extra-12-earth2studio-perturbation' or extra == 'extra-12-earth2studio-sfno' or extra != 'extra-12-earth2studio-ace2'" },
+    { name = "torch-harmonics", version = "0.8.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-12-earth2studio-ace2' or (extra != 'extra-12-earth2studio-atlas' and extra != 'extra-12-earth2studio-fcn3' and extra != 'extra-12-earth2studio-perturbation' and extra != 'extra-12-earth2studio-sfno')" },
+    { name = "torch-harmonics", version = "0.8.1", source = { git = "https://github.com/NVIDIA/torch-harmonics.git?rev=a632ca748a12bd9f74dbc1e00653317810991f74#a632ca748a12bd9f74dbc1e00653317810991f74" }, marker = "extra == 'extra-12-earth2studio-atlas' or extra == 'extra-12-earth2studio-fcn3' or extra == 'extra-12-earth2studio-perturbation' or extra == 'extra-12-earth2studio-sfno'" },
 ]
 atlas = [
     { name = "einops" },
@@ -1866,6 +1873,7 @@ dev = [
     { name = "hatch" },
     { name = "interrogate" },
     { name = "mypy" },
+    { name = "pip" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -2044,6 +2052,7 @@ requires-dist = [
     { name = "pygrib" },
     { name = "pynvml", marker = "extra == 'all'", specifier = ">=12.0.0" },
     { name = "pynvml", marker = "extra == 'sfno'", specifier = ">=12.0.0" },
+    { name = "pyproj", specifier = ">=3.7.1" },
     { name = "pyproj", marker = "extra == 'all'", specifier = ">=3.7.1" },
     { name = "pyproj", marker = "extra == 'da-stormcast'", specifier = ">=3.7.1" },
     { name = "pyproj", marker = "extra == 'data'", specifier = ">=3.7.1" },
@@ -2112,6 +2121,7 @@ dev = [
     { name = "hatch", specifier = ">=1.14.0" },
     { name = "interrogate", specifier = ">=1.5.0" },
     { name = "mypy" },
+    { name = "pip", specifier = ">=26.0.1" },
     { name = "pre-commit" },
     { name = "pytest", specifier = ">=6.0.0" },
     { name = "pytest-asyncio", specifier = ">=0.26.0" },
@@ -2139,6 +2149,71 @@ docs = [
     { name = "sphinx-favicon", specifier = ">=1.0.1" },
     { name = "sphinx-gallery", specifier = ">=0.12.0" },
     { name = "sphinx-togglebutton", specifier = ">=0.3.0" },
+]
+
+[[package]]
+name = "earth2studio-serve-client"
+source = { editable = "serve/client" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "earth2studio" },
+    { name = "fsspec" },
+    { name = "numpy" },
+    { name = "requests" },
+    { name = "urllib3" },
+    { name = "xarray" },
+]
+
+[package.optional-dependencies]
+e2studio = [
+    { name = "torch" },
+]
+examples = [
+    { name = "matplotlib" },
+    { name = "nvidia-physicsnemo" },
+    { name = "omegaconf" },
+    { name = "pytz" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "black" },
+    { name = "flake8" },
+    { name = "isort" },
+    { name = "mypy" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = ">=3.8.0" },
+    { name = "earth2studio", editable = "." },
+    { name = "fsspec", specifier = ">=2021.6.0" },
+    { name = "matplotlib", marker = "extra == 'examples'", specifier = ">=3.3.0" },
+    { name = "numpy", specifier = ">=1.21.0" },
+    { name = "nvidia-physicsnemo", marker = "extra == 'examples'", specifier = ">=2.0" },
+    { name = "omegaconf", marker = "extra == 'examples'", specifier = ">=2.3.0" },
+    { name = "pytz", marker = "extra == 'examples'" },
+    { name = "requests", specifier = ">=2.25.0" },
+    { name = "torch", marker = "extra == 'e2studio'", specifier = ">=2.9.0" },
+    { name = "urllib3", specifier = ">=1.26.0" },
+    { name = "xarray", specifier = ">=0.19.0" },
+]
+provides-extras = ["e2studio", "examples"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "black", specifier = ">=21.0" },
+    { name = "flake8", specifier = ">=3.8" },
+    { name = "isort", specifier = ">=5.0" },
+    { name = "mypy", specifier = ">=0.910" },
+    { name = "pre-commit", specifier = ">=2.15.0" },
+    { name = "pytest", specifier = ">=6.0" },
+    { name = "pytest-cov", specifier = ">=2.0" },
+    { name = "ruff", specifier = ">=0.7.2" },
 ]
 
 [[package]]
@@ -2383,6 +2458,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/22/ef/345b0f88b8e9d9e12051142a9cdcf590bf70206d20d81c3f773ade8d9e32/findlibs-0.1.2.tar.gz", hash = "sha256:1f56d220c69686392ebdc4c65b32ee344818bca633643a8c97592957d1728122", size = 11302, upload-time = "2025-07-28T09:15:03.675Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2f/ff/76dd547e129206899e4e26446c3ca7aeaff948c31b05250e9b8690e76883/findlibs-0.1.2-py3-none-any.whl", hash = "sha256:5348bbc7055d2a505962576c2e285b6c0aae6d749f82ba71296e7d41336e66e8", size = 10707, upload-time = "2025-07-28T09:15:02.733Z" },
+]
+
+[[package]]
+name = "flake8"
+version = "7.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mccabe" },
+    { name = "pycodestyle" },
+    { name = "pyflakes" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9b/af/fbfe3c4b5a657d79e5c47a2827a362f9e1b763336a52f926126aa6dc7123/flake8-7.3.0.tar.gz", hash = "sha256:fe044858146b9fc69b551a4b490d69cf960fcb78ad1edcb84e7fbb1b4a8e3872", size = 48326, upload-time = "2025-06-20T19:31:35.838Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9f/56/13ab06b4f93ca7cac71078fbe37fcea175d3216f31f85c3168a6bbd0bb9a/flake8-7.3.0-py2.py3-none-any.whl", hash = "sha256:b9696257b9ce8beb888cdbe31cf885c90d31928fe202be0889a7cdafad32f01e", size = 57922, upload-time = "2025-06-20T19:31:34.425Z" },
 ]
 
 [[package]]
@@ -3467,6 +3556,15 @@ wheels = [
 ]
 
 [[package]]
+name = "isort"
+version = "8.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ef/7c/ec4ab396d31b3b395e2e999c8f46dec78c5e29209fac49d1f4dace04041d/isort-8.0.1.tar.gz", hash = "sha256:171ac4ff559cdc060bcfff550bc8404a486fee0caab245679c2abe7cb253c78d", size = 769592, upload-time = "2026-02-28T10:08:20.685Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3e/95/c7c34aa53c16353c56d0b802fba48d5f5caa2cdee7958acbcb795c830416/isort-8.0.1-py3-none-any.whl", hash = "sha256:28b89bc70f751b559aeca209e6120393d43fbe2490de0559662be7a9787e3d75", size = 89733, upload-time = "2026-02-28T10:08:19.466Z" },
+]
+
+[[package]]
 name = "jaraco-classes"
 version = "3.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -4094,8 +4192,8 @@ dependencies = [
     { name = "pillow" },
     { name = "ruamel-yaml" },
     { name = "torch" },
-    { name = "torch-harmonics", version = "0.8.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-12-earth2studio-ace2'" },
-    { name = "torch-harmonics", version = "0.8.1", source = { git = "https://github.com/NVIDIA/torch-harmonics.git?rev=a632ca748a12bd9f74dbc1e00653317810991f74#a632ca748a12bd9f74dbc1e00653317810991f74" }, marker = "extra == 'extra-12-earth2studio-atlas' or extra == 'extra-12-earth2studio-fcn3' or extra == 'extra-12-earth2studio-perturbation' or extra == 'extra-12-earth2studio-sfno' or extra != 'extra-12-earth2studio-ace2'" },
+    { name = "torch-harmonics", version = "0.8.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-12-earth2studio-ace2' or (extra != 'extra-12-earth2studio-atlas' and extra != 'extra-12-earth2studio-fcn3' and extra != 'extra-12-earth2studio-perturbation' and extra != 'extra-12-earth2studio-sfno')" },
+    { name = "torch-harmonics", version = "0.8.1", source = { git = "https://github.com/NVIDIA/torch-harmonics.git?rev=a632ca748a12bd9f74dbc1e00653317810991f74#a632ca748a12bd9f74dbc1e00653317810991f74" }, marker = "extra == 'extra-12-earth2studio-atlas' or extra == 'extra-12-earth2studio-fcn3' or extra == 'extra-12-earth2studio-perturbation' or extra == 'extra-12-earth2studio-sfno'" },
     { name = "tqdm" },
     { name = "wandb" },
 ]
@@ -4269,6 +4367,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/04/30/3afaa31c757f34b7725ab9d2ba8b48b5e89c2019c003e7d0ead143aabc5a/matplotlib-3.10.8-pp311-pypy311_pp73-macosx_10_15_x86_64.whl", hash = "sha256:6da7c2ce169267d0d066adcf63758f0604aa6c3eebf67458930f9d9b79ad1db1", size = 8249198, upload-time = "2025-12-10T22:56:45.584Z" },
     { url = "https://files.pythonhosted.org/packages/48/2f/6334aec331f57485a642a7c8be03cb286f29111ae71c46c38b363230063c/matplotlib-3.10.8-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:9153c3292705be9f9c64498a8872118540c3f4123d1a1c840172edf262c8be4a", size = 8136817, upload-time = "2025-12-10T22:56:47.339Z" },
     { url = "https://files.pythonhosted.org/packages/73/e4/6d6f14b2a759c622f191b2d67e9075a3f56aaccb3be4bb9bb6890030d0a0/matplotlib-3.10.8-pp311-pypy311_pp73-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:1ae029229a57cd1e8fe542485f27e7ca7b23aa9e8944ddb4985d0bc444f1eca2", size = 8713867, upload-time = "2025-12-10T22:56:48.954Z" },
+]
+
+[[package]]
+name = "mccabe"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/ff/0ffefdcac38932a54d2b5eed4e0ba8a408f215002cd178ad1df0f2806ff8/mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325", size = 9658, upload-time = "2022-01-24T01:14:51.113Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/1a/1f68f9ba0c207934b35b86a8ca3aad8395a3d6dd7921c0686e23853ff5a9/mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e", size = 7350, upload-time = "2022-01-24T01:14:49.62Z" },
 ]
 
 [[package]]
@@ -5680,6 +5787,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pip"
+version = "26.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/48/83/0d7d4e9efe3344b8e2fe25d93be44f64b65364d3c8d7bc6dc90198d5422e/pip-26.0.1.tar.gz", hash = "sha256:c4037d8a277c89b320abe636d59f91e6d0922d08a05b60e85e53b296613346d8", size = 1812747, upload-time = "2026-02-05T02:20:18.702Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/de/f0/c81e05b613866b76d2d1066490adf1a3dbc4ee9d9c839961c3fc8a6997af/pip-26.0.1-py3-none-any.whl", hash = "sha256:bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b", size = 1787723, upload-time = "2026-02-05T02:20:16.416Z" },
+]
+
+[[package]]
 name = "planetary-computer"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -6022,6 +6138,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pycodestyle"
+version = "2.14.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/11/e0/abfd2a0d2efe47670df87f3e3a0e2edda42f055053c85361f19c0e2c1ca8/pycodestyle-2.14.0.tar.gz", hash = "sha256:c4b5b517d278089ff9d0abdec919cd97262a3367449ea1c8b49b91529167b783", size = 39472, upload-time = "2025-06-20T18:49:48.75Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/27/a58ddaf8c588a3ef080db9d0b7e0b97215cee3a45df74f3a94dbbf5c893a/pycodestyle-2.14.0-py2.py3-none-any.whl", hash = "sha256:dd6bf7cb4ee77f8e016f9c8e74a35ddd9f67e1d5fd4184d86c3b98e07099f42d", size = 31594, upload-time = "2025-06-20T18:49:47.491Z" },
+]
+
+[[package]]
 name = "pycparser"
 version = "3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -6159,6 +6284,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/00/20/bb50f9de3a6de69e6abd6b087b52fa2418a0418b19597601605f855ad044/pydata_sphinx_theme-0.16.1.tar.gz", hash = "sha256:a08b7f0b7f70387219dc659bff0893a7554d5eb39b59d3b8ef37b8401b7642d7", size = 2412693, upload-time = "2024-12-17T10:53:39.537Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e2/0d/8ba33fa83a7dcde13eb3c1c2a0c1cc29950a048bfed6d9b0d8b6bd710b4c/pydata_sphinx_theme-0.16.1-py3-none-any.whl", hash = "sha256:225331e8ac4b32682c18fcac5a57a6f717c4e632cea5dd0e247b55155faeccde", size = 6723264, upload-time = "2024-12-17T10:53:35.645Z" },
+]
+
+[[package]]
+name = "pyflakes"
+version = "3.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/45/dc/fd034dc20b4b264b3d015808458391acbf9df40b1e54750ef175d39180b1/pyflakes-3.4.0.tar.gz", hash = "sha256:b24f96fafb7d2ab0ec5075b7350b3d2d2218eab42003821c06344973d3ea2f58", size = 64669, upload-time = "2025-06-20T18:45:27.834Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c2/2f/81d580a0fb83baeb066698975cb14a618bdbed7720678566f1b046a95fe8/pyflakes-3.4.0-py2.py3-none-any.whl", hash = "sha256:f742a7dbd0d9cb9ea41e9a24a918996e8170c799fa528688d40dd582c8265f4f", size = 63551, upload-time = "2025-06-20T18:45:26.937Z" },
 ]
 
 [[package]]
@@ -8176,8 +8310,8 @@ resolution-markers = [
     "python_full_version < '3.12' and platform_machine != 'aarch64' and platform_machine != 'x86_64' and sys_platform != 'linux'",
 ]
 dependencies = [
-    { name = "numpy", marker = "extra == 'extra-12-earth2studio-ace2'" },
-    { name = "torch", marker = "extra == 'extra-12-earth2studio-ace2'" },
+    { name = "numpy", marker = "extra == 'extra-12-earth2studio-ace2' or (extra != 'extra-12-earth2studio-atlas' and extra != 'extra-12-earth2studio-fcn3' and extra != 'extra-12-earth2studio-perturbation' and extra != 'extra-12-earth2studio-sfno')" },
+    { name = "torch", marker = "extra == 'extra-12-earth2studio-ace2' or (extra != 'extra-12-earth2studio-atlas' and extra != 'extra-12-earth2studio-fcn3' and extra != 'extra-12-earth2studio-perturbation' and extra != 'extra-12-earth2studio-sfno')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9f/b5/fb47e55b935c868cce08cc5bb4912e665e5b3e438c76ba54ed3ab205cf77/torch_harmonics-0.8.0.tar.gz", hash = "sha256:b44340184416283a3636640a9050c2187515d6bd9858fa0421b048b66465f773", size = 5844331, upload-time = "2025-07-21T16:48:39.912Z" }
 
@@ -8212,8 +8346,8 @@ resolution-markers = [
     "python_full_version < '3.12' and platform_machine != 'aarch64' and platform_machine != 'x86_64' and sys_platform != 'linux'",
 ]
 dependencies = [
-    { name = "numpy", marker = "extra == 'extra-12-earth2studio-atlas' or extra == 'extra-12-earth2studio-fcn3' or extra == 'extra-12-earth2studio-perturbation' or extra == 'extra-12-earth2studio-sfno' or extra != 'extra-12-earth2studio-ace2'" },
-    { name = "torch", marker = "extra == 'extra-12-earth2studio-atlas' or extra == 'extra-12-earth2studio-fcn3' or extra == 'extra-12-earth2studio-perturbation' or extra == 'extra-12-earth2studio-sfno' or extra != 'extra-12-earth2studio-ace2'" },
+    { name = "numpy", marker = "extra == 'extra-12-earth2studio-atlas' or extra == 'extra-12-earth2studio-fcn3' or extra == 'extra-12-earth2studio-perturbation' or extra == 'extra-12-earth2studio-sfno'" },
+    { name = "torch", marker = "extra == 'extra-12-earth2studio-atlas' or extra == 'extra-12-earth2studio-fcn3' or extra == 'extra-12-earth2studio-perturbation' or extra == 'extra-12-earth2studio-sfno'" },
 ]
 
 [[package]]
