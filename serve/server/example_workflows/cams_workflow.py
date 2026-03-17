@@ -4,143 +4,250 @@
 """
 CAMS Analysis & Forecast Workflows
 
-Serve ECMWF/CAMS atmospheric composition data (dust, PM2.5, SO₂, O₃, etc.)
-via the Earth2Studio REST API.
-
-Two workflows:
-- cams_analysis: EU surface analysis (0.1° grid, hourly)
-- cams_forecast: EU surface + global column forecasts
+Serve ECMWF/CAMS atmospheric composition data via the Earth2Studio REST API.
+Uses run.deterministic with a Persistence model (identity) so the standard
+IO pipeline (zarr, progress, results) works identically to built-in workflows.
 """
 
-from datetime import datetime, timedelta
-from typing import Literal
+import json
+import logging
+from collections import OrderedDict
+from typing import Any, Literal
 
-import torch
+import numpy as np
+import zarr
+from pydantic import Field
 
-from earth2studio.data import CAMS, CAMS_FX
-from earth2studio.io import IOBackend
-from earth2studio.serve.server import Earth2Workflow, workflow_registry
+from earth2studio.serve.server.workflow import (
+    Workflow,
+    WorkflowParameters,
+    WorkflowProgress,
+    workflow_registry,
+)
 
-# Common CAMS variable presets
+logger = logging.getLogger(__name__)
+
 EU_SURFACE = ["dust", "pm2p5", "pm10", "so2sfc", "no2sfc", "o3sfc"]
 EU_MULTI_LEVEL = [
-    "dust",
-    "dust_500m",
-    "dust_1000m",
-    "dust_3000m",
-    "dust_5000m",
-    "pm2p5",
-    "pm2p5_500m",
-    "pm2p5_1000m",
-    "pm2p5_3000m",
-    "pm2p5_5000m",
+    "dust", "dust_500m", "dust_1000m", "dust_3000m", "dust_5000m",
+    "pm2p5", "pm2p5_500m", "pm2p5_1000m", "pm2p5_3000m", "pm2p5_5000m",
 ]
 GLOBAL_AOD = ["aod550", "duaod550", "omaod550", "bcaod550", "ssaod550", "suaod550"]
 
+PRESETS = {
+    "eu_surface": EU_SURFACE,
+    "eu_multi_level": EU_MULTI_LEVEL,
+    "global_aod": GLOBAL_AOD,
+}
 
-def _resolve_preset(
+
+def _resolve_variables(
     variables: list[str] | None, preset: str
 ) -> list[str]:
     if variables:
         return variables
-    presets = {
-        "eu_surface": EU_SURFACE,
-        "eu_multi_level": EU_MULTI_LEVEL,
-        "global_aod": GLOBAL_AOD,
-    }
-    if preset not in presets:
-        raise ValueError(f"Unknown preset '{preset}', available: {list(presets)}")
-    return presets[preset]
+    if preset not in PRESETS:
+        raise ValueError(f"Unknown preset '{preset}', available: {list(PRESETS)}")
+    return PRESETS[preset]
+
+
+# ---------------------------------------------------------------------------
+# CAMS Analysis
+# ---------------------------------------------------------------------------
+
+class CAMSAnalysisParameters(WorkflowParameters):
+    start_time: list[str] = Field(
+        default=["2025-06-01T00:00:00"],
+        description="Analysis time(s) in ISO 8601 format",
+    )
+    preset: Literal["eu_surface", "eu_multi_level"] = Field(
+        default="eu_surface",
+        description="Variable preset (eu_surface or eu_multi_level)",
+    )
+    variables: list[str] | None = Field(
+        default=None,
+        description="Explicit variable list (overrides preset if given)",
+    )
 
 
 @workflow_registry.register
-class CAMSAnalysisWorkflow(Earth2Workflow):
-    """CAMS European air quality analysis — hourly surface + multi-level data."""
+class CAMSAnalysisWorkflow(Workflow):
+    """CAMS European air quality analysis at 0.1 deg resolution."""
 
     name = "cams_analysis"
-    description = "CAMS EU analysis (dust, PM2.5, SO₂, NO₂, O₃, CO) at 0.1° resolution"
+    description = "CAMS EU analysis (dust, PM2.5, SO2, NO2, O3, CO) at 0.1 deg"
+    Parameters = CAMSAnalysisParameters
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.data = CAMS(cache=True, verbose=True)
+    @classmethod
+    def validate_parameters(
+        cls, parameters: dict[str, Any] | CAMSAnalysisParameters
+    ) -> CAMSAnalysisParameters:
+        return CAMSAnalysisParameters.validate(parameters)
 
-    def __call__(
+    def run(
         self,
-        io: IOBackend,
-        start_time: list[datetime] = [datetime(2025, 6, 1, 0)],
-        variables: list[str] | None = None,
-        preset: Literal["eu_surface", "eu_multi_level"] = "eu_surface",
-    ) -> None:
-        """Fetch CAMS EU analysis and write to IO backend.
+        parameters: dict[str, Any] | CAMSAnalysisParameters,
+        execution_id: str,
+    ) -> dict[str, Any]:
+        parameters = self.validate_parameters(parameters)
 
-        Parameters
-        ----------
-        io : IOBackend
-            Output backend (Zarr or NetCDF4), provided by the serve framework.
-        start_time : list[datetime]
-            UTC timestamps to fetch analysis for (hourly resolution).
-        variables : list[str] | None
-            Explicit variable list (CAMSLexicon names). Overrides preset.
-        preset : str
-            Variable preset: "eu_surface" (6 vars) or "eu_multi_level" (10 vars).
-        """
-        resolved = _resolve_preset(variables, preset)
-        da = self.data(start_time, resolved)
+        self.update_execution_data(execution_id, WorkflowProgress(
+            progress="Importing CAMS components...", current_step=1, total_steps=4,
+        ))
 
-        coords = {
-            "time": da.coords["time"].values,
-            "variable": da.coords["variable"].values,
-            "lat": da.coords["lat"].values,
-            "lon": da.coords["lon"].values,
+        from earth2studio import run as e2run
+        from earth2studio.data import CAMS
+        from earth2studio.io import ZarrBackend
+        from earth2studio.models.px import Persistence
+
+        resolved = _resolve_variables(parameters.variables, parameters.preset)
+
+        self.update_execution_data(execution_id, WorkflowProgress(
+            progress="Fetching CAMS grid metadata...", current_step=2, total_steps=4,
+        ))
+
+        data = CAMS(cache=True, verbose=True)
+        sample = data(parameters.start_time[:1], resolved[:1])
+        domain = OrderedDict({
+            "lat": sample.coords["lat"].values,
+            "lon": sample.coords["lon"].values,
+        })
+
+        self.update_execution_data(execution_id, WorkflowProgress(
+            progress=f"Running CAMS analysis ({len(resolved)} vars)...",
+            current_step=3, total_steps=4,
+        ))
+
+        output_dir = self.get_output_path(execution_id)
+        io = ZarrBackend(
+            file_name=str(output_dir / "results.zarr"),
+            chunks={"time": 1, "lead_time": 1},
+            backend_kwargs={"overwrite": True},
+        )
+
+        model = Persistence(resolved, domain, dt=np.timedelta64(1, "h"))
+        e2run.deterministic(parameters.start_time, 0, model, data, io)
+
+        zarr.consolidate_metadata(str(output_dir / "results.zarr"))
+
+        metadata = {
+            "start_time": parameters.start_time,
+            "preset": parameters.preset,
+            "variables": resolved,
         }
-        io.add_array(coords, "cams_analysis")
-        io.write(torch.from_numpy(da.values), coords, "cams_analysis")
+        with open(output_dir / "metadata.json", "w") as f:
+            json.dump(metadata, f, indent=2)
+
+        self.update_execution_data(execution_id, WorkflowProgress(
+            progress="Complete!", current_step=4, total_steps=4,
+        ))
+        self.update_execution_data(execution_id, {
+            "metadata": metadata,
+        })
+
+        return {"status": "success", "output_path": str(output_dir), "metadata": metadata}
+
+
+# ---------------------------------------------------------------------------
+# CAMS Forecast
+# ---------------------------------------------------------------------------
+
+class CAMSForecastParameters(WorkflowParameters):
+    start_time: list[str] = Field(
+        default=["2025-06-01T00:00:00"],
+        description="Forecast initialization time(s) in ISO 8601 format",
+    )
+    lead_hours: list[int] = Field(
+        default=[0, 6, 12, 24, 48],
+        description="Lead times in hours",
+    )
+    preset: Literal["eu_surface", "eu_multi_level", "global_aod"] = Field(
+        default="eu_surface",
+        description="Variable preset",
+    )
+    variables: list[str] | None = Field(
+        default=None,
+        description="Explicit variable list (overrides preset if given)",
+    )
 
 
 @workflow_registry.register
-class CAMSForecastWorkflow(Earth2Workflow):
-    """CAMS forecast — EU surface + global column/AOD forecasts."""
+class CAMSForecastWorkflow(Workflow):
+    """CAMS forecast — EU surface + global column/AOD."""
 
     name = "cams_forecast"
     description = "CAMS forecast (EU surface + global AOD/column) via CDS API"
+    Parameters = CAMSForecastParameters
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.data = CAMS_FX(cache=True, verbose=True)
+    @classmethod
+    def validate_parameters(
+        cls, parameters: dict[str, Any] | CAMSForecastParameters
+    ) -> CAMSForecastParameters:
+        return CAMSForecastParameters.validate(parameters)
 
-    def __call__(
+    def run(
         self,
-        io: IOBackend,
-        start_time: list[datetime] = [datetime(2025, 6, 1, 0)],
-        lead_hours: list[int] = [0, 6, 12, 24, 48],
-        variables: list[str] | None = None,
-        preset: Literal["eu_surface", "eu_multi_level", "global_aod"] = "eu_surface",
-    ) -> None:
-        """Fetch CAMS forecast and write to IO backend.
+        parameters: dict[str, Any] | CAMSForecastParameters,
+        execution_id: str,
+    ) -> dict[str, Any]:
+        parameters = self.validate_parameters(parameters)
 
-        Parameters
-        ----------
-        io : IOBackend
-            Output backend, provided by the serve framework.
-        start_time : list[datetime]
-            Forecast initialization times (UTC).
-        lead_hours : list[int]
-            Lead times in hours from initialization.
-        variables : list[str] | None
-            Explicit variable list. Overrides preset.
-        preset : str
-            Variable preset: "eu_surface", "eu_multi_level", or "global_aod".
-        """
-        resolved = _resolve_preset(variables, preset)
-        lead_times = [timedelta(hours=h) for h in lead_hours]
-        da = self.data(start_time, lead_times, resolved)
+        self.update_execution_data(execution_id, WorkflowProgress(
+            progress="Importing CAMS forecast components...", current_step=1, total_steps=4,
+        ))
 
-        coords = {
-            "time": da.coords["time"].values,
-            "lead_time": da.coords["lead_time"].values,
-            "variable": da.coords["variable"].values,
-            "lat": da.coords["lat"].values,
-            "lon": da.coords["lon"].values,
+        from datetime import timedelta
+
+        from earth2studio import run as e2run
+        from earth2studio.data import CAMS_FX
+        from earth2studio.io import ZarrBackend
+        from earth2studio.models.px import Persistence
+
+        resolved = _resolve_variables(parameters.variables, parameters.preset)
+
+        self.update_execution_data(execution_id, WorkflowProgress(
+            progress="Fetching CAMS forecast grid metadata...", current_step=2, total_steps=4,
+        ))
+
+        data = CAMS_FX(cache=True, verbose=True)
+        sample = data(parameters.start_time[:1], [timedelta(hours=0)], resolved[:1])
+        domain = OrderedDict({
+            "lat": sample.coords["lat"].values,
+            "lon": sample.coords["lon"].values,
+        })
+
+        self.update_execution_data(execution_id, WorkflowProgress(
+            progress=f"Running CAMS forecast ({len(resolved)} vars, {len(parameters.lead_hours)} lead times)...",
+            current_step=3, total_steps=4,
+        ))
+
+        output_dir = self.get_output_path(execution_id)
+        io = ZarrBackend(
+            file_name=str(output_dir / "results.zarr"),
+            chunks={"time": 1, "lead_time": 1},
+            backend_kwargs={"overwrite": True},
+        )
+
+        dt_h = parameters.lead_hours[0] if parameters.lead_hours else 1
+        model = Persistence(resolved, domain, dt=np.timedelta64(dt_h, "h"))
+        e2run.deterministic(parameters.start_time, 0, model, data, io)
+
+        zarr.consolidate_metadata(str(output_dir / "results.zarr"))
+
+        metadata = {
+            "start_time": parameters.start_time,
+            "lead_hours": parameters.lead_hours,
+            "preset": parameters.preset,
+            "variables": resolved,
         }
-        io.add_array(coords, "cams_forecast")
-        io.write(torch.from_numpy(da.values), coords, "cams_forecast")
+        with open(output_dir / "metadata.json", "w") as f:
+            json.dump(metadata, f, indent=2)
+
+        self.update_execution_data(execution_id, WorkflowProgress(
+            progress="Complete!", current_step=4, total_steps=4,
+        ))
+        self.update_execution_data(execution_id, {
+            "metadata": metadata,
+        })
+
+        return {"status": "success", "output_path": str(output_dir), "metadata": metadata}
