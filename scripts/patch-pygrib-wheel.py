@@ -11,6 +11,7 @@ import io
 import os
 import shutil
 import sys
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -45,7 +46,7 @@ def patch_wheel(wheel_path: Path, eccodes_dir: Path) -> None:
     if not definitions_src.exists():
         raise FileNotFoundError(f"definitions not found: {definitions_src}")
 
-    work_dir = wheel_path.parent / f"_wheel_patch_{wheel_path.stem}"
+    work_dir = Path(tempfile.gettempdir()) / f"_wheel_patch_{wheel_path.stem}"
     work_dir.mkdir(exist_ok=True)
     try:
         with zipfile.ZipFile(wheel_path, "r") as z:
@@ -67,7 +68,12 @@ def patch_wheel(wheel_path: Path, eccodes_dir: Path) -> None:
         # Copy definitions
         def_dest = pygrib_dir / "share" / "eccodes" / "definitions"
         def_dest.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(definitions_src, def_dest, dirs_existing_ok=True)
+        for item in definitions_src.iterdir():
+            dst = def_dest / item.name
+            if item.is_dir():
+                shutil.copytree(item, dst)
+            else:
+                shutil.copy2(item, dst)
 
         # Patch __init__.py to set ECCODES_DEFINITION_PATH and DLL search path
         init_py = pygrib_dir / "__init__.py"

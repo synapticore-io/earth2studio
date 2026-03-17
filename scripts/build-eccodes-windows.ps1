@@ -58,7 +58,7 @@ if (-not (Test-Path "$SourceDir\CMakeLists.txt")) {
         Write-Error "Download failed: $_. Exception: $($_.Exception.Message)"
     }
     Write-Host "Extracting..."
-    tar -xzf $SourceZip -C $env:TEMP
+    tar --force-local -xzf $SourceZip -C $env:TEMP
     $extracted = Get-ChildItem "$env:TEMP" -Filter "eccodes-*" -Directory | Where-Object { $_.Name -match "eccodes-\d" } | Select-Object -First 1
     if ($extracted -and $extracted.FullName -ne (Resolve-Path $SourceDir -ErrorAction SilentlyContinue).Path) {
         if (Test-Path $SourceDir) { Remove-Item $SourceDir -Recurse -Force }

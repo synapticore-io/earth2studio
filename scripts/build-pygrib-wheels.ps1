@@ -44,11 +44,15 @@ New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 foreach ($py in $PythonVersions) {
     Write-Host "Building pygrib wheel for Python $py..."
     $pyPath = $null
-    try {
-        $pyPath = & py -$py -c "import sys; print(sys.executable)" 2>$null
-    } catch {}
-    if (-not $pyPath -or -not (Test-Path $pyPath)) {
-        $pyPath = (Get-Command "python$py" -ErrorAction SilentlyContinue)?.Source
+    $pyOut = & py -$py -c "import sys; print(sys.executable)" 2>$null
+    if ($LASTEXITCODE -eq 0 -and $pyOut -and (Test-Path ($pyOut.Trim()))) {
+        $pyPath = $pyOut.Trim()
+    }
+    if (-not $pyPath) {
+        $venvPy = "$RepoRoot\.venv\Scripts\python.exe"
+        if ((Test-Path $venvPy) -and ($py -eq "3.12" -or $py -eq "3.11")) {
+            $pyPath = $venvPy
+        }
     }
     if (-not $pyPath) {
         Write-Warning "Python $py not found, skipping."
@@ -63,7 +67,8 @@ foreach ($py in $PythonVersions) {
         Pop-Location
     }
 
-    $wheels = Get-ChildItem $OutputDir -Filter "pygrib-*-cp${py.Replace('.','')}-*-win_amd64.whl"
+    $cp = $py.Replace('.', '')
+    $wheels = Get-ChildItem $OutputDir -Filter "pygrib-*-cp${cp}-*-win_amd64.whl"
     foreach ($whl in $wheels) {
         Write-Host "Patching $($whl.Name)..."
         & $pyPath "$RepoRoot\scripts\patch-pygrib-wheel.py" $whl.FullName $EccodesPrefix

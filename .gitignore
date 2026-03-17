@@ -36,6 +36,10 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
+# Test fixtures (large GRIB samples)
+test/fixtures/*.grib2
+test/fixtures/*.grb2
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
