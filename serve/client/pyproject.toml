@@ -3,7 +3,7 @@ requires = ["hatchling", "uv-dynamic-versioning"]
 build-backend = "hatchling.build"
 
 [project]
-name = "earth2studio.serve.client"
+name = "earth2studio-client"
 dynamic = ["version"]
 description = "Python client SDK for Earth2Studio REST API"
 authors = [
@@ -36,7 +36,6 @@ keywords = [
 ]
 dependencies = [
     "aiohttp>=3.8.0",
-    "earth2studio>=0.9.0",
     "fsspec>=2021.6.0",
     "numpy>=1.21.0",
     "requests>=2.25.0",
@@ -45,12 +44,8 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-earth2studio = { workspace = true }
 
 [project.optional-dependencies]
-e2studio = [
-    "torch>=2.9.0",
-]
 examples = [
     "matplotlib>=3.3.0",
     "nvidia-physicsnemo>=2.0",
@@ -62,10 +57,7 @@ examples = [
 source = "uv-dynamic-versioning"
 
 [tool.hatch.build.targets.wheel]
-packages = ["earth2studio/serve/client"]
-
-[tool.hatch.build.targets.wheel.sources]
-"earth2studio/serve/client" = "../../earth2studio/serve/client"
+packages = ["earth2studio_client"]
 
 [tool.uv-dynamic-versioning]
 vcs = "git"

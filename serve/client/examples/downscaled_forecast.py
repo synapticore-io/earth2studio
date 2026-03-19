@@ -35,7 +35,7 @@ from earth2studio.data import HRRR  # type: ignore[import-untyped]
 from earth2studio.io import XarrayBackend  # type: ignore[import-untyped]
 from earth2studio.models.px import StormCast  # type: ignore[import-untyped]
 from earth2studio.run import deterministic  # type: ignore[import-untyped]
-from earth2studio.serve.client.e2client import RemoteEarth2Workflow
+from earth2studio_client import RemoteEarth2Workflow
 
 # /// script
 # dependencies = [

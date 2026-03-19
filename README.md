@@ -124,12 +124,12 @@ See **[Windows Installation](docs/install-windows.md)** for step-by-step instruc
 
 ### Workspace
 
-The repo uses a [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/) with `serve/client` as a member. The REST API client (`earth2studio-serve-client`) lives there:
+The repo uses a [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/) with `serve/client` as a member. The REST API client (`earth2studio-client`) lives there:
 
 ```bash
-uv sync                                    # root + workspace
-uv sync --package earth2studio-serve-client # install client
-uv run --package earth2studio-serve-client python -c "from earth2studio.serve.client.e2client import RemoteEarth2Workflow; ..."
+uv sync                                  # root + workspace
+uv sync --package earth2studio-client     # install client
+uv run --package earth2studio-client python -c "from earth2studio_client import RemoteEarth2Workflow; ..."
 ```
 
 See **[serve/client/README.md](serve/client/README.md)** for the client SDK docs.

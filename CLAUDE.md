@@ -72,8 +72,8 @@ Config: `serve/server/conf/config.yaml`. Custom Workflows via `WORKFLOW_DIR` env
 ## Client-SDK
 
 ```python
-from earth2studio.serve.client.e2client import RemoteEarth2Workflow
-workflow = RemoteEarth2Workflow("http://localhost:8000", workflow_name="cams_analysis", device="cpu")
+from earth2studio_client import RemoteEarth2Workflow
+workflow = RemoteEarth2Workflow("http://localhost:8000", workflow_name="cams_analysis")
 ds = workflow(start_time=[datetime(2025, 6, 1)], preset="eu_surface").as_dataset()
 ```
 

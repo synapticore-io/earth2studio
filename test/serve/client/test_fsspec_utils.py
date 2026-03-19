@@ -20,12 +20,12 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from earth2studio.serve.client.fsspec_utils import (
+from earth2studio_client.fsspec_utils import (
     SignedURLFileSystem,
     create_cloudfront_mapper,
     get_mapper,
 )
-from earth2studio.serve.client.models import (
+from earth2studio_client.models import (
     InferenceRequestResults,
     RequestStatus,
     StorageType,
@@ -248,7 +248,7 @@ class TestCreateCloudfrontMapper:
     def test_create_cloudfront_mapper_builds_mapper(self) -> None:
         """create_cloudfront_mapper parses URL and returns FSMap with SignedURLFileSystem."""
         signed_url = "https://cdn.example.com/bucket/path?Policy=pol&Signature=sig&Key-Pair-Id=kid"
-        with patch("earth2studio.serve.client.fsspec_utils.fsspec") as mock_fsspec:
+        with patch("earth2studio_client.fsspec_utils.fsspec") as mock_fsspec:
             mock_fs = Mock()
             mock_fsspec.filesystem.return_value = mock_fs
             mock_map = Mock()
@@ -266,7 +266,7 @@ class TestCreateCloudfrontMapper:
     def test_create_cloudfront_mapper_with_zarr_path(self) -> None:
         """create_cloudfront_mapper with zarr_path appends to base URL."""
         signed_url = "https://cdn.example.com/bucket?Policy=p&Signature=s&Key-Pair-Id=k"
-        with patch("earth2studio.serve.client.fsspec_utils.fsspec") as mock_fsspec:
+        with patch("earth2studio_client.fsspec_utils.fsspec") as mock_fsspec:
             mock_fs = Mock()
             mock_fsspec.filesystem.return_value = mock_fs
             mock_map = Mock()
@@ -281,7 +281,7 @@ class TestCreateCloudfrontMapper:
         signed_url = (
             "https://cdn.example.com/bucket/*?Policy=p&Signature=s&Key-Pair-Id=k"
         )
-        with patch("earth2studio.serve.client.fsspec_utils.fsspec") as mock_fsspec:
+        with patch("earth2studio_client.fsspec_utils.fsspec") as mock_fsspec:
             mock_fs = Mock()
             mock_fsspec.filesystem.return_value = mock_fs
             mock_fsspec.mapping.FSMap = Mock()
@@ -315,9 +315,7 @@ class TestGetMapper:
             storage_type=StorageType.S3,
             signed_url="https://cdn.example.com/path?Policy=p&Signature=s&Key-Pair-Id=k",
         )
-        with patch(
-            "earth2studio.serve.client.fsspec_utils.create_cloudfront_mapper"
-        ) as mock_create:
+        with patch("earth2studio_client.fsspec_utils.create_cloudfront_mapper") as mock_create:
             mock_create.return_value = Mock()
             out = get_mapper(result)
             assert out is mock_create.return_value
@@ -333,9 +331,7 @@ class TestGetMapper:
             storage_type=StorageType.S3,
             signed_url="https://cdn.example.com?Policy=p&Signature=s&Key-Pair-Id=k",
         )
-        with patch(
-            "earth2studio.serve.client.fsspec_utils.create_cloudfront_mapper"
-        ) as mock_create:
+        with patch("earth2studio_client.fsspec_utils.create_cloudfront_mapper") as mock_create:
             mock_create.return_value = Mock()
             get_mapper(result, zarr_path="results.zarr")
             mock_create.assert_called_once_with(result.signed_url, "results.zarr")

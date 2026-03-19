@@ -35,7 +35,7 @@ import xarray as xr
 from earth2studio.io import XarrayBackend  # type: ignore[import-untyped]
 from earth2studio.models.dx import PrecipitationAFNO  # type: ignore[import-untyped]
 from earth2studio.run import diagnostic  # type: ignore[import-untyped]
-from earth2studio.serve.client.e2client import RemoteEarth2Workflow
+from earth2studio_client import RemoteEarth2Workflow
 from earth2studio.utils.type import (  # type: ignore[import-untyped]
     LeadTimeArray,
     TimeArray,

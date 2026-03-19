@@ -23,18 +23,18 @@ from unittest.mock import Mock, patch
 import pytest
 import requests  # type: ignore[import-untyped]
 
-from earth2studio.serve.client.client import Earth2StudioClient
-from earth2studio.serve.client.exceptions import (
+from earth2studio_client.client import Earth2StudioClient
+from earth2studio_client.exceptions import (
     APIConnectionError as ClientConnectionError,
 )
-from earth2studio.serve.client.exceptions import (
+from earth2studio_client.exceptions import (
     BadRequestError,
     Earth2StudioAPIError,
     InferenceRequestNotFoundError,
     InternalServerError,
     RequestTimeoutError,
 )
-from earth2studio.serve.client.models import (
+from earth2studio_client.models import (
     HealthStatus,
     InferenceRequest,
     InferenceRequestResponse,

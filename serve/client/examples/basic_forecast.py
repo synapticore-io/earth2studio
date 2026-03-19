@@ -31,7 +31,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import torch
 
-from earth2studio.serve.client.e2client import RemoteEarth2Workflow
+from earth2studio_client import RemoteEarth2Workflow
 
 # /// script
 # dependencies = [

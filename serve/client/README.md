@@ -4,9 +4,9 @@ A Python client library for the Earth2Studio REST API.
 
 The client SDK provides two interfaces to remotely access the Earth2Studio API server:
 
-1. **`earth2studio.serve.client.e2client.RemoteEarth2Workflow`** - High-level interface for seamless
+1. **`earth2studio_client.RemoteEarth2Workflow`** - High-level interface for seamless
    integration with Earth2Studio and Xarray. Recommended for most use cases.
-2. **`earth2studio.serve.client.client.Earth2StudioClient`** - Low-level interface for direct API access
+2. **`earth2studio_client.Earth2StudioClient`** - Low-level interface for direct API access
    and result file management. Useful for custom workflows and integrations.
 
 Please refer to the server's `README_workflows.md` and `README_earth2workflows.md` for
@@ -21,7 +21,7 @@ included in the server examples and get the results as an Earth2Studio data sour
 ```python
 from datetime import datetime, timedelta
 import os
-from earth2studio.serve.client.e2client import RemoteEarth2Workflow
+from earth2studio_client import RemoteEarth2Workflow
 
 # Create client (configurable via environment variable)
 api_url = os.getenv("EARTH2STUDIO_API_URL", "http://localhost:8000")
@@ -86,7 +86,7 @@ exec_1766159252_5f779460
 
 from datetime import datetime
 import os
-from earth2studio.serve.client.e2client import RemoteEarth2Workflow, RemoteEarth2WorkflowResult
+from earth2studio_client.e2client import RemoteEarth2Workflow, RemoteEarth2WorkflowResult
 
 # re-initialize workflow
 api_url = os.getenv("EARTH2STUDIO_API_URL", "http://localhost:8000")
@@ -169,7 +169,7 @@ Initialize the client:
 ```python
 import os
 from datetime import datetime
-from earth2studio.serve.client.client import Earth2StudioClient, InferenceRequest
+from earth2studio_client import Earth2StudioClient, InferenceRequest
 
 # Create client (configurable via environment variable)
 api_url = os.getenv("EARTH2STUDIO_API_URL", "http://localhost:8000")
@@ -217,7 +217,7 @@ For long-running forecasts, you can submit requests and check status separately:
 
 ```python
 import time
-from earth2studio.serve.client.models import RequestStatus
+from earth2studio_client import RequestStatus
 
 # Submit request
 response = client.submit_inference_request(request)

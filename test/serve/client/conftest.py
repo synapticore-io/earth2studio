@@ -21,7 +21,7 @@ from typing import Any
 
 import pytest
 
-# earth2studio.serve.client is importable because uv adds the repository
+# earth2studio_client is importable because uv adds the repository
 # root to sys.path when running: uv run -m pytest test/serve/client
 
 # =============================================================================
