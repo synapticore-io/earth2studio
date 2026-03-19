@@ -10,7 +10,10 @@ services:
     volumes:
       - earth2cache:/workspace/data/earth2cache
       - outputs:/outputs
-      - ./server/example_workflows:/workspace/custom_workflows:ro
+      # Host workflows mount. Override via WORKFLOW_SRC if needed.
+      # - In `serve/` directory: default `./server/example_workflows` is correct.
+      # - From repo root: set `WORKFLOW_SRC=./serve/server/example_workflows`.
+      - ${WORKFLOW_SRC:-./server/example_workflows}:/workspace/custom_workflows:ro
       - ${CDSAPI_RC:-C:/Users/bjoern/.cdsapirc}:/root/.cdsapirc:ro
     environment:
       - EARTH2STUDIO_CACHE=/workspace/data/earth2cache
