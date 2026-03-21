@@ -4,17 +4,22 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import logging
+import os
+import tempfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urljoin
 
-import aiohttp
 import xarray as xr
 
 from . import fsspec_utils
 from .client import Earth2StudioClient
 from .exceptions import Earth2StudioAPIError
 from .models import InferenceRequest, InferenceRequestResults, StorageType
+
+logger = logging.getLogger(__name__)
 
 
 class RemoteEarth2Workflow:
@@ -37,6 +42,10 @@ class RemoteEarth2Workflow:
         response = self.client.submit_inference_request(request)
         return RemoteEarth2WorkflowResult(self, response.execution_id)
 
+    def close(self) -> None:
+        """Close the underlying HTTP session."""
+        self.client.close()
+
 
 @dataclass
 class RemoteEarth2WorkflowResult:
@@ -45,10 +54,24 @@ class RemoteEarth2WorkflowResult:
     workflow: RemoteEarth2Workflow
     execution_id: str
     _result: InferenceRequestResults | None = None
+    _closed: bool = False
+    _tmpdir: str | None = field(default=None, repr=False)
+
+    def close(self) -> None:
+        """Close the underlying HTTP session.
+
+        Automatically called after ``as_dataset()`` or ``as_data_source()`` completes.
+        Can be called manually if the result is discarded without accessing data.
+        """
+        if not self._closed:
+            self._closed = True
+            self.workflow.client.close()
 
     def _get_result(self) -> InferenceRequestResults:
         if self._result is None:
             self._result = self.workflow.client.wait_for_completion(self.execution_id)
+            self._closed = True
+            self.workflow.client.close()
         return self._result
 
     def as_dataset(self) -> xr.Dataset:
@@ -61,7 +84,7 @@ class RemoteEarth2WorkflowResult:
         result_path = result_paths[0]
 
         if result_path.endswith(".zarr"):
-            return _open_zarr_dataset(self.workflow, result, result_path)
+            return _open_zarr_dataset(self, result, result_path)
 
         if result_path.endswith(".nc"):
             result_data = self.workflow.client.download_result(result, result_path)
@@ -81,8 +104,69 @@ class RemoteEarth2WorkflowResult:
         return InferenceOutputSource(self.as_dataset())
 
 
+def _download_zarr_to_local(
+    workflow_result: RemoteEarth2WorkflowResult,
+    result: InferenceRequestResults,
+    result_path: str,
+    max_workers: int = 8,
+) -> str:
+    """Download a remote Zarr store to a local temp directory via synchronous HTTP.
+
+    Works around a bug in zarr 3.x / xarray where async HTTP chunk reads
+    return fill values instead of actual data for some chunks.
+    """
+    client = workflow_result.workflow.client
+    zarr_prefix = result_path
+    if not zarr_prefix.endswith("/"):
+        zarr_prefix += "/"
+
+    zarr_files = [f for f in result.output_files if zarr_prefix in f.path or f.path == result_path]
+
+    tmpdir = tempfile.mkdtemp(prefix="e2s_zarr_")
+    workflow_result._tmpdir = tmpdir
+    zarr_dir = os.path.join(tmpdir, "results.zarr")
+
+    root_url = urljoin(
+        workflow_result.workflow.base_url + "/",
+        client.result_root_path(result).lstrip("/"),
+    )
+
+    def _download_file(file_info: Any) -> None:
+        rel = file_info.path
+        prefix = f"{result.request_id}/"
+        if rel.startswith(prefix):
+            rel = rel[len(prefix):]
+        # Strip results.zarr/ prefix to get internal zarr path
+        zarr_store_prefix = "results.zarr/"
+        if zarr_store_prefix in rel:
+            internal_path = rel[rel.index(zarr_store_prefix) + len(zarr_store_prefix):]
+        else:
+            internal_path = rel
+
+        local_path = os.path.join(zarr_dir, internal_path.replace("/", os.sep))
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+
+        chunk_url = f"{root_url}{rel}"
+        import requests
+        headers = {}
+        if client.token:
+            headers["Authorization"] = f"Bearer {client.token}"
+        resp = requests.get(chunk_url, headers=headers, timeout=client.timeout)
+        resp.raise_for_status()
+        with open(local_path, "wb") as f:
+            f.write(resp.content)
+
+    logger.info("Downloading %d zarr files to %s", len(zarr_files), zarr_dir)
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {pool.submit(_download_file, f): f for f in zarr_files}
+        for future in as_completed(futures):
+            future.result()  # raises on error
+
+    return zarr_dir
+
+
 def _open_zarr_dataset(
-    workflow: RemoteEarth2Workflow,
+    workflow_result: RemoteEarth2WorkflowResult,
     result: InferenceRequestResults,
     result_path: str,
 ) -> xr.Dataset:
@@ -90,36 +174,10 @@ def _open_zarr_dataset(
         # Strip out the execution-id prefix from the path (first component)
         zarr_path = "/".join(result_path.split("/")[1:])
         mapper = fsspec_utils.get_mapper(result, zarr_path)
-        return xr.open_zarr(mapper, consolidated=True, **workflow.xr_args)
+        return xr.open_zarr(mapper, consolidated=True, zarr_format=3, **workflow_result.workflow.xr_args)
 
     if result.storage_type == StorageType.SERVER:
-        result_url = urljoin(
-            workflow.base_url + "/",
-            (workflow.client.result_root_path(result) + result_path).lstrip("/"),
-        )
-
-        xr_kwargs = dict(workflow.xr_args)
-        storage_options = dict(xr_kwargs.pop("storage_options", {}))
-
-        # Forward auth token for private endpoints
-        if workflow.client.token:
-            headers = dict(storage_options.get("headers", {}))
-            headers["Authorization"] = f"Bearer {workflow.client.token}"
-            storage_options["headers"] = headers
-
-        # Ensure large zarr reads don't time out immediately
-        zarr_timeout = max(300.0, workflow.client.timeout)
-        client_kwargs = dict(storage_options.get("client_kwargs", {}))
-        if "timeout" not in client_kwargs:
-            client_kwargs["timeout"] = aiohttp.ClientTimeout(total=zarr_timeout)
-        storage_options["client_kwargs"] = client_kwargs
-
-        return xr.open_zarr(
-            result_url,
-            consolidated=True,
-            storage_options=storage_options or None,
-            **xr_kwargs,
-        )
+        zarr_dir = _download_zarr_to_local(workflow_result, result, result_path)
+        return xr.open_zarr(zarr_dir, consolidated=True, zarr_format=3, **workflow_result.workflow.xr_args)
 
     raise ValueError(f"Unsupported storage type: {result.storage_type}")
-
