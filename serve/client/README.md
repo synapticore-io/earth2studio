@@ -28,7 +28,6 @@ api_url = os.getenv("EARTH2STUDIO_API_URL", "http://localhost:8000")
 workflow = RemoteEarth2Workflow(
     api_url,
     workflow_name="deterministic_earth2_workflow",
-    device='cuda'  # use 'cpu' if you don't have a GPU on the client machine
 )
 
 data_source = workflow(start_time=[datetime(2025, 8, 21, 6)]).as_data_source()
@@ -56,21 +55,12 @@ t2m = ds["t2m"].sel(lead_time=np.timedelta64(timedelta(hours=24)))
 t2m_np = t2m.values  # NumPy array
 ```
 
-### Iterate over results
+### Precipitation on the server
 
-Similar to Earth2Studio model iterators, we can iterate over the results as
-`(Tensor, CoordSystem)` tuples:
-
-```python
-model = workflow(start_time=[datetime(2025, 8, 21, 6)]).as_model()
-for (x, coords) in model.create_iterator():
-    # computes the mean on GPU if we used `device='cuda'` when creating the Workflow
-    print(x.mean().cpu().numpy())
-```
-
-This can be used to provide an input to a local workflow that expects a prognostic
-model. The example `diagnostic_analysis.py` shows how to use this to run a local
-diagnostic.
+For diagnostics such as total precipitation, call a workflow that already couples
+prognostic + diagnostic on the server (see `precipitation_forecast` in
+`serve/server/example_workflows/`). The example `diagnostic_analysis.py` loads the
+result with `as_dataset()` and plots `tp` locally.
 
 ### Save reference to remote results
 
@@ -93,7 +83,6 @@ api_url = os.getenv("EARTH2STUDIO_API_URL", "http://localhost:8000")
 workflow = RemoteEarth2Workflow(
     api_url,
     workflow_name="deterministic_earth2_workflow",
-    device='cuda'  # use 'cpu' if you don't have a GPU on the client machine
 )
 
 # manually create result object with the execution_id from earlier
@@ -110,6 +99,7 @@ t2m = data_source(datetime(2025, 8, 22, 6), "t2m")
 Use the results as a low-resolution conditioning for a StormCast model running locally:
 
 ```python
+import torch
 from earth2studio.data import HRRR
 from earth2studio.models.px import StormCast
 from earth2studio.io import NetCDF4Backend
@@ -117,27 +107,27 @@ from earth2studio.io import NetCDF4Backend
 fcn3_workflow = RemoteEarth2Workflow(
     api_url,
     workflow_name="stormcast_fcn3_workflow",
-    device='cuda'  # use 'cpu' if you don't have a GPU on the client machine
 )
 
 hrrr_ic = HRRR()
 stormcast = StormCast.from_pretrained()
 io = NetCDF4Backend("stormcast_result.nc")
 conditioning_source = fcn3_workflow(
-    start_time=[datetime(2025, 8, 21, 6)],
+    start_time=datetime(2025, 8, 21, 6),
     num_hours=num_steps,
     run_stormcast=False
 ).as_data_source()
 stormcast.conditioning_data_source = conditioning_source
 num_hours=5
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 run.deterministic(
     [datetime(2025, 8, 21, 6)],
     num_hours,
     stormcast,
     hrrr_ic,
     io,
-    device='cuda',
+    device=device,
 )
 ```
 
@@ -298,7 +288,6 @@ High-level client for Earth2Studio-compatible remote inference workflows.
 RemoteEarth2Workflow(
     base_url: str,
     workflow_name: str,
-    device: str | torch.device | None = None,
     xr_args: dict[str, Any] | None = None,
     **client_kwargs
 )
@@ -308,14 +297,12 @@ RemoteEarth2Workflow(
 
 - `base_url`: URL of the Earth2Studio API server
 - `workflow_name`: Name of the workflow to execute on the server
-- `device`: Device for tensor operations (e.g., "cuda", "cpu").
 - `xr_args`: Additional keyword arguments passed to xarray.open_dataset/xarray.open_zarr
-- `**client_kwargs`: Additional arguments passed to Earth2StudioClient
+- `**client_kwargs`: Additional arguments passed to Earth2StudioClient (e.g. `timeout`, `token`)
 
 #### RemoteEarth2Workflow methods
 
 - `__call__(**kwargs)` → `RemoteEarth2WorkflowResult`: Submit inference with parameters
-- `to(device)` → `RemoteEarth2Workflow`: Move workflow to specified device
 
 ### RemoteEarth2WorkflowResult
 
@@ -330,7 +317,6 @@ Result object for accessing remote inference outputs.
 
 - `as_dataset()` → `xr.Dataset`: Wait for completion and return result as xarray Dataset
 - `as_data_source()` → `InferenceOutputSource`: Wait for completion and return as Earth2Studio data source
-- `as_model(iter_coord="lead_time")` → `InferenceOutputModel`: Model iterable over time steps
 
 ### Earth2StudioClient
 

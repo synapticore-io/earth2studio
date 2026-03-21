@@ -13,13 +13,13 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/NVIDIA/earth2studio"
+Homepage = "https://github.com/synapticore-io/earth2studio"
 Documentation = "https://nvidia.github.io/earth2studio"
-Issues = "https://github.com/NVIDIA/earth2studio/issues"
-Changelog = "https://github.com/NVIDIA/earth2studio/blob/main/CHANGELOG.md"
+Issues = "https://github.com/synapticore-io/earth2studio/issues"
+Changelog = "https://github.com/synapticore-io/earth2studio/blob/main/CHANGELOG.md"
 
 [tool.uv.sources]
-earth2studio = { git = "https://github.com/NVIDIA/earth2studio", rev = "0.12.1" }
+earth2studio = { git = "https://github.com/synapticore-io/earth2studio", rev = "0.12.1" }
 omegaconf = { git = "https://github.com/omry/omegaconf.git" }
 
 [tool.hatch.build.targets.sdist]

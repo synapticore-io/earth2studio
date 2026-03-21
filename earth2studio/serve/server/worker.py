@@ -33,7 +33,10 @@ except ImportError:
     redis_client = None
 
 from earth2studio.serve.server.config import get_config, get_config_manager
-from earth2studio.serve.server.utils import queue_next_stage
+from earth2studio.serve.server.utils import (
+    get_inference_request_output_path_key,
+    queue_next_stage,
+)
 from earth2studio.serve.server.workflow import (
     Workflow,
     WorkflowStatus,
@@ -123,6 +126,11 @@ def _finalize_inline(
 
     with open(metadata_path, "w") as f:
         json_mod.dump(metadata.to_dict(), f, indent=2)
+
+    # Expose output dir for GET .../results/{filepath} (same key as zip pipeline)
+    request_id = f"{workflow_name}:{execution_id}"
+    output_path_key = get_inference_request_output_path_key(request_id)
+    redis_client.setex(output_path_key, 86400, str(output_path))
 
     # Set COMPLETED
     updates: dict[str, Any] = {

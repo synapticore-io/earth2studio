@@ -24,7 +24,7 @@ and commonly used workflows.
 
         # /// script
         # dependencies = [
-        #   "earth2studio @ git+https://github.com/NVIDIA/earth2studio.git",
+        #   "earth2studio @ git+https://github.com/synapticore-io/earth2studio.git",
         #   "cartopy",
         # ]
         # ///

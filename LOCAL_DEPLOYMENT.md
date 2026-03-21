@@ -84,7 +84,7 @@ mkdir earth2studio-offline && cd earth2studio-offline
 uv init --python=3.12
 
 # Add Earth2Studio with desired extras
-uv add "earth2studio[aifs,graphcast,data] @ git+https://github.com/NVIDIA/earth2studio.git@v0.12.0"
+uv add "earth2studio[aifs,graphcast,data] @ git+https://github.com/synapticore-io/earth2studio.git@v0.12.0"
 
 # Export lock file for reproducible builds
 uv export --frozen > requirements.txt

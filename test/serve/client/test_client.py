@@ -442,3 +442,14 @@ class TestEarth2StudioClientParseErrorResponse:
         mock_response.text = ""
         result = client._parse_error_response(mock_response)
         assert "HTTP 500 error" in result["error"]
+
+
+def test_inference_request_results_relative_file_path() -> None:
+    r = InferenceRequestResults(
+        request_id="exec_abc",
+        status=RequestStatus.COMPLETED,
+        output_files=[],
+        completion_time=datetime.now(),
+    )
+    assert r.relative_file_path("exec_abc/results.zarr") == "results.zarr"
+    assert r.relative_file_path("results.zarr") == "results.zarr"

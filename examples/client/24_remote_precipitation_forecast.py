@@ -71,7 +71,7 @@ workflow = RemoteEarth2Workflow(
     token=api_token or None,
 )
 
-lat, lon = 37.4, -122.0
+lat, lon = 0.0, 110.0  # Tropical region (Indonesia) with monsoon precipitation
 start_time = datetime(2025, 8, 21, 6)
 num_steps = 10
 plot_path = "outputs/24_remote_tp_timeseries.jpg"

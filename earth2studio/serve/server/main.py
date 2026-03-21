@@ -940,14 +940,18 @@ async def get_workflow_result_file(
         if output_dir_str:
             output_dir = Path(output_dir_str)
         else:
-            raise HTTPException(
-                status_code=404,
-                detail={
-                    "error": "Output directory not found",
-                    "details": f"No output directory associated with execution {execution_id}",
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                },
-            )
+            # Fast-path finalize does not always persist output_path in Redis; use the
+            # same layout as Workflow.get_output_path (no mkdir — read-only lookup).
+            output_dir = Path(config.paths.default_output_dir) / workflow_name / execution_id
+            if not output_dir.exists():
+                raise HTTPException(
+                    status_code=404,
+                    detail={
+                        "error": "Output directory not found",
+                        "details": f"No results on disk for execution {execution_id}",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    },
+                )
 
         # Handle case where filepath includes the directory name (as seen in zip manifest)
         # The manifest includes the execution ID prefix (e.g., "exec_123/summary.txt")

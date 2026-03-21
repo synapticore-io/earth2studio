@@ -31,7 +31,7 @@ and it's recommended that users use an uv project for the best install experienc
 ```bash
 mkdir earth2studio-project && cd earth2studio-project
 uv init --python=3.12
-uv add "earth2studio @ git+https://github.com/NVIDIA/earth2studio.git@0.12.1"
+uv add "earth2studio @ git+https://github.com/synapticore-io/earth2studio.git@0.12.1"
 ```
 
 :::{dropdown} uv Install
@@ -52,13 +52,13 @@ To install the latest main branch version of Earth2Studio:
 
 ```bash
 pip install hatchling # Optional if install process builds the wheel
-pip install "earth2studio @ git+https://github.com/NVIDIA/earth2studio"
+pip install "earth2studio @ git+https://github.com/synapticore-io/earth2studio.git"
 ```
 
 or if you are using uv:
 
 ```bash
-uv add "earth2studio @ git+https://github.com/NVIDIA/earth2studio.git"
+uv add "earth2studio @ git+https://github.com/synapticore-io/earth2studio.git"
 ```
 
 ## Verify Installation
@@ -821,14 +821,14 @@ the following commands:
 ```bash
 mkdir earth2studio-project && cd earth2studio-project
 uv init --python=3.12
-uv add "earth2studio @ git+https://github.com/NVIDIA/earth2studio.git@0.12.1"
+uv add "earth2studio @ git+https://github.com/synapticore-io/earth2studio.git@0.12.1"
 ```
 
 or if you are already inside an existing uv project:
 
 ```bash
 uv venv --python=3.12
-uv add "earth2studio @ git+https://github.com/NVIDIA/earth2studio.git@0.12.1"
+uv add "earth2studio @ git+https://github.com/synapticore-io/earth2studio.git@0.12.1"
 ```
 
 (pytorch_container_environment)=
@@ -851,7 +851,7 @@ docker run -it -t nvcr.io/nvidia/pytorch:25.12-py3
     libeccodes-tools libeccodes-dev
 >>> unset PIP_CONSTRAINT
 >>> curl -LsSf https://astral.sh/uv/install.sh | sh && source $HOME/.local/bin/env
->>> uv pip install --system --break-system-packages "earth2studio@git+https://github.com/NVIDIA/earth2studio.git@0.12.1"
+>>> uv pip install --system --break-system-packages "earth2studio@git+https://github.com/synapticore-io/earth2studio.git@0.12.1"
 ```
 
 <!-- markdownlint-disable MD013 -->
@@ -864,7 +864,7 @@ do with pip, for example:
 ```bash
 uv pip install --system \
     --break-system-packages \
-    "earth2studio[aifs,data]@git+https://github.com/NVIDIA/earth2studio.git@0.12.1"
+    "earth2studio[aifs,data]@git+https://github.com/synapticore-io/earth2studio.git@0.12.1"
 ```
 
 :::
@@ -893,7 +893,7 @@ package tooling.
 conda create -n earth2studio python=3.12
 conda activate earth2studio
 
-uv pip install --system --break-system-packages "earth2studio@git+https://github.com/NVIDIA/earth2studio.git@0.12.1"
+uv pip install --system --break-system-packages "earth2studio@git+https://github.com/synapticore-io/earth2studio.git@0.12.1"
 ```
 
 # System Recommendations

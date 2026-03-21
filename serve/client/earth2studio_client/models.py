@@ -149,6 +149,13 @@ class InferenceRequestResults:
         netcdf_paths = [f.path for f in self.output_files if f.path.endswith(".nc")]
         return zarr_paths_sorted + netcdf_paths
 
+    def relative_file_path(self, manifest_path: str) -> str:
+        """Strip ``{request_id}/`` prefix for URLs under ``.../results/<filepath>``."""
+        prefix = f"{self.request_id}/"
+        if manifest_path.startswith(prefix):
+            return manifest_path[len(prefix) :]
+        return manifest_path
+
 
 @dataclass
 class HealthStatus:

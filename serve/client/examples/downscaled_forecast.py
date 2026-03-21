@@ -23,6 +23,8 @@ This example shows how to:
 2. Submit a simple deterministic forecast request and retrieve results as xarray dataset
 3. Run precipitation diagnostic model locally to get precipitation
 4. Create and save a matplotlib line plot of the precipitation forecast
+
+Sphinx gallery variant: ``examples/client/25_remote_stormcast_downscaling.py``.
 """
 
 import os
@@ -67,8 +69,7 @@ def main(
     workflow = RemoteEarth2Workflow(
         api_url,
         workflow_name="stormcast_fcn3_workflow",
-        device="cuda" if torch.cuda.is_available() else "cpu",
-        token=api_token,
+        token=api_token or None,
     )
 
     # Check if API is healthy
@@ -93,9 +94,8 @@ def main(
     io = XarrayBackend()
     hrrr_ic = HRRR()
 
-    deterministic(
-        [start_time], num_steps, stormcast, hrrr_ic, io, device=workflow.device
-    )
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    deterministic([start_time], num_steps, stormcast, hrrr_ic, io, device=device)
 
     # Extract t2m data for the specified location
     ds = io.root

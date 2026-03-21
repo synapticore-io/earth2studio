@@ -109,6 +109,9 @@ serve = [
     "requests>=2.25.0",
     "urllib3>=1.26.0",
 ]
+client = [
+    "earth2studio-client",
+]
 # PX Models
 ace2 = [
     "fme",
@@ -303,6 +306,7 @@ torch-harmonics = [
   { git = "https://github.com/NVIDIA/torch-harmonics.git", rev = "a632ca748a12bd9f74dbc1e00653317810991f74", extra = "fcn3"},
   { git = "https://github.com/NVIDIA/torch-harmonics.git", rev = "a632ca748a12bd9f74dbc1e00653317810991f74", extra = "sfno"},
 ]
+earth2studio-client = { workspace = true }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -328,6 +332,7 @@ build = [
 ]
 dev = [
     "black==24.1.0",
+    "matplotlib>=3.3.0",
     "coverage>=6.5.0",
     "interrogate>=1.5.0",
     "hatch>=1.14.0",
@@ -347,6 +352,7 @@ dev = [
     "tox-uv>=1.29.0",
     "cdsapi>=0.7.5",
     "pip>=26.0.1",
+    "earth2studio-client",
 ]
 docs = [
     "cartopy",
@@ -393,6 +399,7 @@ exclude = []
 "__init__.py" = ["F401"]
 "docs/*.py" = ["F401"]
 "examples/*.py" = ["E402"]
+"examples/client/*.py" = ["E402"]
 "recipes/**/*_notebook.py" = ["E402"]
 # Ignore `S101` (assertions) in all `test` files.
 "test/*.py" = ["S101"]

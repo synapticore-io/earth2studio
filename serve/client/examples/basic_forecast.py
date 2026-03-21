@@ -23,19 +23,19 @@ This example shows how to:
 2. Submit a simple deterministic forecast request and retrieve results as xarray dataset
 3. Extract 2-meter temperature data at a specific location
 4. Create and save a matplotlib line plot of the forecast
+
+Sphinx gallery variant (same logic, notebook-style cells): ``examples/client/23_remote_deterministic_forecast.py``.
 """
 
 import os
 from datetime import datetime
 
 import matplotlib.pyplot as plt
-import torch
 
 from earth2studio_client import RemoteEarth2Workflow
 
 # /// script
 # dependencies = [
-#   "torch",
 #   "earth2studio[serve]>=0.9.0",
 #   "matplotlib>=3.3.0",
 # ]
@@ -65,8 +65,7 @@ def main(
     workflow = RemoteEarth2Workflow(
         api_url,
         workflow_name="deterministic_earth2_workflow",
-        device="cuda" if torch.cuda.is_available() else "cpu",
-        token=api_token,
+        token=api_token or None,
     )
 
     # Check if API is healthy

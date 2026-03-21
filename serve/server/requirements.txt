@@ -13,7 +13,7 @@ hiredis>=2.0.0
 rq>=1.15.0
 
 # Earth2Studio dependencies (if available)
-# earth2studio[dlwp] @ git+https://github.com/NVIDIA/earth2studio.git
+# earth2studio[dlwp] @ git+https://github.com/synapticore-io/earth2studio.git
 
 # skip this - PyTorch (for device management)
 # torch>=2.0.0

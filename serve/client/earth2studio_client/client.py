@@ -204,11 +204,12 @@ class Earth2StudioClient:
             content = mapper.fs.cat_file(path)
             return io.BytesIO(content)
 
+        rel = result.relative_file_path(path)
         response = cast(
             requests.Response,
             self._make_request(
                 method="GET",
-                endpoint=f"{self.result_root_path(result)}{path}",
+                endpoint=f"{self.result_root_path(result)}{rel}",
                 return_response=True,
                 stream=True,
                 timeout=timeout,

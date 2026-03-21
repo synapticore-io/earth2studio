@@ -16,35 +16,24 @@
 # limitations under the License.
 
 """
-Forecast example with local diagnostic using Earth2Studio Client SDK.
+Precipitation forecast example using Earth2Studio Client SDK.
 
-This example shows how to:
-1. Access a remote workflow
-2. Submit a simple deterministic forecast request and retrieve results as xarray dataset
-3. Run precipitation diagnostic model locally to get precipitation
-4. Create and save a matplotlib line plot of the precipitation forecast
+Runs the server workflow ``precipitation_forecast`` (FCN/DLWP + PrecipitationAFNO),
+then plots total precipitation at a point — same idea as the old local-diagnostic
+demo, without requiring a client-side ``as_model()`` API.
+
+Sphinx gallery variant: ``examples/client/24_remote_precipitation_forecast.py``.
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import matplotlib.pyplot as plt
-import torch
-import xarray as xr
 
-from earth2studio.io import XarrayBackend  # type: ignore[import-untyped]
-from earth2studio.models.dx import PrecipitationAFNO  # type: ignore[import-untyped]
-from earth2studio.run import diagnostic  # type: ignore[import-untyped]
 from earth2studio_client import RemoteEarth2Workflow
-from earth2studio.utils.type import (  # type: ignore[import-untyped]
-    LeadTimeArray,
-    TimeArray,
-    VariableArray,
-)
 
 # /// script
 # dependencies = [
-#   "torch",
 #   "earth2studio[serve]>=0.9.0",
 #   "matplotlib>=3.3.0",
 # ]
@@ -58,7 +47,7 @@ def main(
     start_time: datetime = datetime(2025, 8, 21, 6),
     num_steps: int = 10,
 ) -> None:
-    """Run a basic deterministic forecast and save a t2m plot.
+    """Run remote precipitation workflow and save a tp plot.
 
     Args:
         plot_file: Path to save the precipitation plot (default: 'tp_plot.png')
@@ -68,17 +57,14 @@ def main(
         num_steps: Number of forecast time steps (default: 10)
     """
 
-    # Create client (configurable via environment variable)
     api_url = os.getenv("EARTH2STUDIO_API_URL", "http://localhost:8000")
     api_token = os.getenv("EARTH2STUDIO_API_TOKEN", "")
     workflow = RemoteEarth2Workflow(
         api_url,
-        workflow_name="deterministic_earth2_workflow",
-        device="cuda" if torch.cuda.is_available() else "cpu",
-        token=api_token,
+        workflow_name="precipitation_forecast",
+        token=api_token or None,
     )
 
-    # Check if API is healthy
     try:
         health = workflow.client.health_check()
         print(f"✓ API Status: {health.status}")
@@ -86,29 +72,15 @@ def main(
         print(f"✗ API not available: {e}")
         return
 
-    # Call workflow and get result as an iterable model
     try:
-        model = workflow(start_time=[start_time], num_steps=num_steps).as_model()
+        ds = workflow(start_time=[start_time], num_steps=num_steps).as_dataset()
     except Exception as e:
         print(f"\n❌ Forecast failed: {e}")
         return
 
-    precip_afno = PrecipitationAFNO.from_pretrained()
-    io = XarrayBackend()
-    data = NullDataSource()
-
-    diagnostic(
-        [start_time], num_steps, model, precip_afno, data, io, device=model.device
-    )
-
-    # Extract total precipitation for the specified location
-    ds = io.root
     tp = ds["tp"].sel(lat=lat, lon=lon, method="nearest").values.ravel()
-
-    # Extract time coordinate
     time_coord = ds["lead_time"].values.astype("timedelta64[h]")
 
-    # Create line plot of total precipitation
     print(f"   Creating plot: {plot_file}")
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(time_coord, tp, marker="o", linewidth=2, markersize=6)
@@ -121,34 +93,12 @@ def main(
     )
     ax.grid(True, alpha=0.3)
 
-    # Save the plot
     fig.tight_layout()
     fig.savefig(plot_file, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
     print("\n🎉 Forecast complete!")
     print(f"   Plot saved to: {plot_file}")
-
-
-class NullDataSource:
-    """Minimal data source that returns empty DataArray for diagnostic input."""
-
-    def __call__(
-        self,
-        time: datetime | list[datetime] | TimeArray,
-        lead_time: timedelta | list[timedelta] | LeadTimeArray,
-        variable: str | list[str] | VariableArray,
-    ) -> xr.DataArray:
-        """Return an empty DataArray (unused coords for local diagnostic)."""
-        return xr.DataArray()
-
-    async def fetch(
-        self,
-        time: datetime | list[datetime] | TimeArray,
-        lead_time: timedelta | list[timedelta] | LeadTimeArray,
-        variable: str | list[str] | VariableArray,
-    ) -> xr.DataArray:
-        return xr.DataArray()
 
 
 if __name__ == "__main__":
