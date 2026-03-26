@@ -3,6 +3,8 @@
 
 # NVIDIA Earth2Studio
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/N4N71WOHZ3)
+
 > **Fork:** Maintained by [synapticore](https://github.com/synapticore-io) — focused on CAMS/atmospheric composition and data-driven weather & climate visualization.
 > Upstream: [NVIDIA/earth2studio](https://github.com/NVIDIA/earth2studio)
 
