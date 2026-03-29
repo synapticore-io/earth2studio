@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "earth2studio"
 authors = [
   { name="NVIDIA PhysicsNeMo Team" },
-  { name="Synapticore Team", url="https://synapticore.io" },
 ]
 description = "Open-source deep-learning framework for exploring, building and deploying AI weather/climate workflows."
 readme = "README.md"
@@ -23,7 +22,6 @@ dependencies = [
     "netCDF4>=1.6.4,<1.7.3", # https://github.com/Unidata/netcdf4-python/issues/1438
     "nest_asyncio",
     "pygrib",
-    "pyproj>=3.7.1",
     "python-dotenv",
     "pandas<3.0", # https://github.com/esgf2-us/intake-esgf/issues/167
     "pyarrow>=14.0.0",
@@ -73,7 +71,7 @@ data = [
     "httpx==0.28.1",
     "rasterio>=1.3.9",
     "rioxarray>=0.15.5",
-    "pyproj>=3.7.1", # also in core (pygrib, HRRR)
+    "pyproj>=3.7.1", # TODO: pygrib imports this, so technically in core, to check
     "scipy>=1.15.2",
     "multi-storage-client[boto3,google-cloud-storage,fsspec]>=0.33.0",
 ]
@@ -108,9 +106,6 @@ serve = [
     "python-multipart>=0.0.6",
     "requests>=2.25.0",
     "urllib3>=1.26.0",
-]
-client = [
-    "earth2studio-client",
 ]
 # PX Models
 ace2 = [
@@ -255,10 +250,10 @@ da-stormcast = [
 ]
 # All, must not have conflicts
 all = [
-    "earth2studio[data,perturbation,statistics,utils]",
+    "earth2studio[data,perturbation,statistics,utils,serve]",
     "earth2studio[aifs,aifsens,atlas,aurora,dlesym,dlwp,fcn,fcn3,fengwu,interp-modafno,pangu,stormcast,sfno,stormscope,graphcast]",
     "earth2studio[cbottle,climatenet,corrdiff,precip-afno,cyclone,precip-afno-v2,solarradiation-afno,windgust-afno]",
-    "earth2studio[da-interp,da-stormcast]",
+    "earth2studio[da-interp,da-stormcast,da-healda]",
 ]
 
 # ==== UV configuration ====
@@ -306,7 +301,6 @@ torch-harmonics = [
   { git = "https://github.com/NVIDIA/torch-harmonics.git", rev = "a632ca748a12bd9f74dbc1e00653317810991f74", extra = "fcn3"},
   { git = "https://github.com/NVIDIA/torch-harmonics.git", rev = "a632ca748a12bd9f74dbc1e00653317810991f74", extra = "sfno"},
 ]
-earth2studio-client = { workspace = true }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -317,9 +311,6 @@ explicit = true
 name = "pytorch-cu128"
 url = "https://download.pytorch.org/whl/cu128"
 explicit = true
-
-[tool.uv.workspace]
-members = ["serve/client"]
 
 [exclude.uv.workspace]
 members = ["recipes/*"]
@@ -332,10 +323,9 @@ build = [
 ]
 dev = [
     "black==24.1.0",
-    "matplotlib>=3.3.0",
     "coverage>=6.5.0",
     "interrogate>=1.5.0",
-    "hatch>=1.14.0",
+    "hatch>=1.16.5",
     "mypy",
     "pre-commit",
     "pytest>=6.0.0",
@@ -349,10 +339,7 @@ dev = [
     "ruff",
     "pytest-asyncio>=0.26.0",
     "tox>=4.32.0",
-    "tox-uv>=1.29.0",
-    "cdsapi>=0.7.5",
-    "pip>=26.0.1",
-    "earth2studio-client",
+    "tox-uv>=1.29.0"
 ]
 docs = [
     "cartopy",
@@ -366,12 +353,9 @@ docs = [
     "sphinx-togglebutton>=0.3.0",
     "myst-parser>=0.18.0",
     "sphinx-favicon>=1.0.1",
-    "nvidia-sphinx-theme"
+    "nvidia-sphinx-theme",
+    "sphinx-badges",
 ]
-
-[tool.marimo.runtime]
-pythonpath = ["."]
-output_max_bytes = 100_000_000
 
 [tool.hatch.version]
 path = "earth2studio/__init__.py"
@@ -399,7 +383,6 @@ exclude = []
 "__init__.py" = ["F401"]
 "docs/*.py" = ["F401"]
 "examples/*.py" = ["E402"]
-"examples/client/*.py" = ["E402"]
 "recipes/**/*_notebook.py" = ["E402"]
 # Ignore `S101` (assertions) in all `test` files.
 "test/*.py" = ["S101"]

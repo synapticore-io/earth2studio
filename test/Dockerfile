@@ -44,6 +44,3 @@ RUN uv tool install tox --with tox-uv
 # Use the build argument
 ARG PYTHON_VERSION=3.12.9
 RUN /usr/bin/uv python install "${PYTHON_VERSION}"
-
-# Make uv tools (tox) and uv-managed Python discoverable
-ENV PATH="/root/.local/share/uv/tools/tox/bin:/root/.local/share/uv/python/cpython-${PYTHON_VERSION}-linux-x86_64-gnu/bin:/root/.local/bin:${PATH}"

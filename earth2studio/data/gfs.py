@@ -26,6 +26,7 @@ from datetime import datetime, timedelta, timezone
 
 import nest_asyncio
 import numpy as np
+import pygrib
 import s3fs
 import xarray as xr
 from fsspec.implementations.ftp import FTPFileSystem
@@ -38,14 +39,7 @@ from earth2studio.data.utils import (
     prep_forecast_inputs,
 )
 from earth2studio.lexicon import GFSLexicon
-from earth2studio.utils.imports import OptionalDependencyFailure
 from earth2studio.utils.type import LeadTimeArray, TimeArray, VariableArray
-
-try:
-    import pygrib
-except ImportError:
-    OptionalDependencyFailure("data")
-    pygrib = None
 
 logger.remove()
 logger.add(lambda msg: tqdm.write(msg, end=""), colorize=True)
@@ -97,6 +91,10 @@ class GFS:
 
     - https://registry.opendata.aws/noaa-gfs-bdp-pds/
     - https://www.emc.ncep.noaa.gov/emc/pages/numerical_forecast_systems/gfs.php
+
+    Badges
+    ------
+    region:global dataclass:analysis product:wind product:precip product:temp product:atmos
     """
 
     GFS_BUCKET_NAME = "noaa-gfs-bdp-pds"
@@ -589,6 +587,10 @@ class GFS_FX(GFS):
 
     - https://registry.opendata.aws/noaa-gfs-bdp-pds/
     - https://www.emc.ncep.noaa.gov/emc/pages/numerical_forecast_systems/gfs.php
+
+    Badges
+    ------
+    region:global dataclass:simulation product:wind product:precip product:temp product:atmos
     """
 
     def __call__(  # type: ignore[override]

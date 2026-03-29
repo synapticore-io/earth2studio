@@ -27,6 +27,7 @@ from datetime import datetime, timedelta, timezone
 
 import nest_asyncio
 import numpy as np
+import pygrib
 import s3fs
 import xarray as xr
 from loguru import logger
@@ -41,12 +42,7 @@ from earth2studio.utils.imports import (
 from earth2studio.utils.type import TimeArray, VariableArray
 
 try:
-    import pygrib
-except ImportError:
-    OptionalDependencyFailure("data")
-    pygrib = None
-
-try:
+    # Ensure the optional eccodes dependency group is flagged if missing at use time
     import eccodes  # noqa: F401
 except ImportError:
     OptionalDependencyFailure("data")
@@ -96,6 +92,10 @@ class MRMS:
 
     - https://registry.opendata.aws/noaa-mrms-pds/
     - https://noaa-mrms-pds.s3.amazonaws.com/index.html
+
+    Badges
+    ------
+    region:na dataclass:observation product:radar
     """
 
     MRMS_BUCKET_NAME = "noaa-mrms-pds"

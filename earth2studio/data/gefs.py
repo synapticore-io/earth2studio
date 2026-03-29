@@ -27,6 +27,7 @@ from datetime import datetime, timedelta, timezone
 
 import nest_asyncio
 import numpy as np
+import pygrib
 import s3fs
 import xarray as xr
 from loguru import logger
@@ -37,14 +38,7 @@ from earth2studio.data.utils import (
     prep_forecast_inputs,
 )
 from earth2studio.lexicon import GEFSLexicon, GEFSLexiconSel
-from earth2studio.utils.imports import OptionalDependencyFailure
 from earth2studio.utils.type import LeadTimeArray, TimeArray, VariableArray
-
-try:
-    import pygrib
-except ImportError:
-    OptionalDependencyFailure("data")
-    pygrib = None
 
 logger.remove()
 logger.add(lambda msg: tqdm.write(msg, end=""), colorize=True)
@@ -102,6 +96,10 @@ class GEFS_FX:
     - https://registry.opendata.aws/noaa-gefs/
     - https://www.ncei.noaa.gov/products/weather-climate-models/global-ensemble-forecast
     - https://www.nco.ncep.noaa.gov/pmb/products/gens/
+
+    Badges
+    ------
+    region:global dataclass:simulation product:wind product:precip product:temp product:atmos
     """
 
     GEFS_BUCKET_NAME = "noaa-gefs-pds"
@@ -660,6 +658,10 @@ class GEFS_FX_721x1440(GEFS_FX):
     - https://registry.opendata.aws/noaa-gefs/
     - https://www.ncei.noaa.gov/products/weather-climate-models/global-ensemble-forecast
     - https://www.nco.ncep.noaa.gov/pmb/products/gens/
+
+    Badges
+    ------
+    region:global dataclass:simulation product:wind product:precip product:temp product:atmos
     """
 
     GEFS_LAT = np.linspace(90, -90, 721)

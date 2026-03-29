@@ -28,6 +28,7 @@ from datetime import datetime, timedelta, timezone
 import gcsfs
 import nest_asyncio
 import numpy as np
+import pygrib
 import s3fs
 import xarray as xr
 from fsspec.implementations.http import HTTPFileSystem
@@ -45,12 +46,6 @@ from earth2studio.utils.imports import (
     check_optional_dependencies,
 )
 from earth2studio.utils.type import LeadTimeArray, TimeArray, VariableArray
-
-try:
-    import pygrib
-except ImportError:
-    OptionalDependencyFailure("data")
-    pygrib = None
 
 try:
     import pyproj
@@ -123,6 +118,10 @@ class HRRR:
     - https://aws.amazon.com/marketplace/pp/prodview-yd5ydptv3vuz2#resources
     - https://hrrrzarr.s3.amazonaws.com/index.html
     - https://console.cloud.google.com/marketplace/product/noaa-public/hrrr
+
+    Badges
+    ------
+    region:na dataclass:analysis product:wind product:precip product:temp product:atmos product:radar
     """
 
     HRRR_BUCKET_NAME = "noaa-hrrr-bdp-pds"
@@ -769,6 +768,10 @@ class HRRR_FX(HRRR):
     - https://www.nco.ncep.noaa.gov/pmb/products/hrrr/
     - https://rapidrefresh.noaa.gov/hrrr/
     - https://console.cloud.google.com/marketplace/product/noaa-public/hrrr
+
+    Badges
+    ------
+    region:na dataclass:simulation product:wind product:precip product:temp product:atmos product:radar
     """
 
     def __init__(
