@@ -1,0 +1,73 @@
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: Copyright (c) 2026 Synapticore
+# SPDX-License-Identifier: Apache-2.0
+#
+# Build Sphinx HTML and deploy to GitHub Pages (source: GitHub Actions).
+#
+# Repository setup (once):
+# 1. Settings → Pages → Build and deployment → Source: "GitHub Actions" (not "Deploy from a branch").
+# 2. Push to `main` or run this workflow manually (Actions → Deploy documentation → Run workflow).
+
+name: Deploy documentation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: System packages (eccodes / geospatial wheels & builds)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeccodes0 libeccodes-dev libgeos-dev libproj-dev proj-bin
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Python
+        run: uv python install 3.12
+
+      - name: Sync (runtime deps + docs group; skip default dev/build groups)
+        run: uv sync --group docs --no-default-groups
+
+      - name: Build HTML
+        env:
+          DOC_VERSION: main
+        run: |
+          uv run make -C docs clean
+          uv run make -C docs html
+          touch docs/_build/html/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build/html
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

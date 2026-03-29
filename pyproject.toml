@@ -107,6 +107,9 @@ serve = [
     "requests>=2.25.0",
     "urllib3>=1.26.0",
 ]
+client = [
+    "earth2studio-client",
+]
 # PX Models
 ace2 = [
     "fme",
@@ -311,6 +314,9 @@ explicit = true
 name = "pytorch-cu128"
 url = "https://download.pytorch.org/whl/cu128"
 explicit = true
+
+[tool.uv.workspace]
+members = ["serve/client"]
 
 [exclude.uv.workspace]
 members = ["recipes/*"]
