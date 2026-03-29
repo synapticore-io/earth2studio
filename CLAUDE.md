@@ -3,6 +3,7 @@
 ## Repository
 
 Fork von [NVIDIA/earth2studio](https://github.com/NVIDIA/earth2studio). Upstream-Sync via `git fetch upstream && git merge upstream/main`.
+Upstream-Version: 0.14.0a0 (gemergt 2026-03-29). Upstream-PR: NVIDIA/earth2studio#780 (CAMS DataSource).
 
 **Fork-Strategie:** Upstream-Files NICHT modifizieren. Eigene Additions in separaten Files halten. Nur `__init__.py` Imports und `pyproject.toml` Extras minimal patchen.
 
@@ -10,6 +11,7 @@ Eigene Erweiterungen:
 - CAMS DataSource/Lexicon (`earth2studio/data/cams.py`, `earth2studio/lexicon/cams.py`)
 - Serve Workflows (`serve/server/example_workflows/`)
 - Client SDK (`serve/client/earth2studio_client/`)
+- Remote Examples (`examples/remote/`)
 - Windows Build Scripts (`scripts/`)
 
 ## Project Rules
@@ -74,6 +76,9 @@ Config: `serve/server/conf/config.yaml`. Custom Workflows via `WORKFLOW_DIR` env
 - **Zarr IO erwartet Tensors**: `io.write()` braucht `torch.Tensor`, nicht numpy arrays.
 - **PyTorch SHMEM**: Container braucht `ipc: host` und `ulimits` (memlock, stack).
 - **fetch_data -> map_coords**: `fetch_data()` liefert GFS-Koordinaten (721 lat), aber FCN erwartet 720. Bei custom Workflows nach `fetch_data` immer `map_coords(x, coords, model.input_coords())` aufrufen.
+- **pyproject.toml workspace**: `earth2studio-client` braucht SOWOHL `[tool.uv.workspace] members` ALS AUCH `{ workspace = true }` in `[tool.uv.sources]`.
+- **Examples-Struktur**: Upstream nutzt Unterordner (`examples/01_getting_started/`, etc.). Eigene Examples NUR in `examples/remote/`.
+- **Upstream-PR Branch**: Immer von `upstream/main` aus erstellen, nur eigene Files cherry-picken.
 
 ## Client-SDK
 
