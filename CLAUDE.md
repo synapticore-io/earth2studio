@@ -4,7 +4,26 @@
 
 Fork von [NVIDIA/earth2studio](https://github.com/NVIDIA/earth2studio). Upstream-Sync via `git fetch upstream && git merge upstream/main`.
 
-Eigene Erweiterungen: CAMS DataSource/Lexicon (`earth2studio/data/cams.py`, `earth2studio/lexicon/cams.py`), CAMS Serve-Workflows (`serve/server/example_workflows/cams_workflow.py`).
+**Fork-Strategie:** Upstream-Files NICHT modifizieren. Eigene Additions in separaten Files halten. Nur `__init__.py` Imports und `pyproject.toml` Extras minimal patchen.
+
+Eigene Erweiterungen:
+- CAMS DataSource/Lexicon (`earth2studio/data/cams.py`, `earth2studio/lexicon/cams.py`)
+- Serve Workflows (`serve/server/example_workflows/`)
+- Client SDK (`serve/client/earth2studio_client/`)
+- Windows Build Scripts (`scripts/`)
+
+## Project Rules
+
+Coding Rules in `.cursor/rules/`:
+
+| Rule file | Topic |
+|---|---|
+| `e2s-002-api-documentation.mdc` | Docstrings and public API docs |
+| `e2s-004-data-sources.mdc` | Implementing `DataSource` classes |
+| `e2s-008-lexicon-usage.mdc` | Variable lexicons and coordinate conventions |
+| `e2s-009-prognostic-models.mdc` | Implementing prognostic models |
+| `e2s-011-examples.mdc` | Writing gallery examples |
+| `e2s-013-assimilation-models.mdc` | Implementing data assimilation models |
 
 ## Commands
 
@@ -29,45 +48,32 @@ cd serve && docker compose up -d   # API auf Port 8000
 docker compose logs -f             # Logs
 ```
 
+## Custom Commands
+
+| Command | Action |
+|---|---|
+| `/format` | Auto-format code |
+| `/lint` | Run all linters (ruff, mypy) |
+| `/test` | Run tests for a specific tox environment |
+| `/docs` | Build docs |
+
 ## Serve-Architektur
 
-Der Container `earth2studio-serve` bündelt alles intern:
+Der Container `earth2studio-serve` buendelt alles intern:
 - **Redis** (in-container, nicht als separater Service)
 - **Uvicorn** (4 Workers, Port 8000)
 - **RQ Workers** (inference, result_zip, object_storage, finalize_metadata)
 - **Cleanup Daemon**
 
-Startup-Reihenfolge: Redis → API + Workers → Health-Check → Warmup.
-
 Config: `serve/server/conf/config.yaml`. Custom Workflows via `WORKFLOW_DIR` env var.
 
 ## Key Gotchas
 
-- **CAMS/CDS Credentials**: `~/.cdsapirc` muss existieren (URL + Key von [CDS](https://cds.climate.copernicus.eu/)). Im Container via Volume-Mount.
-- **Line Endings**: `.gitattributes` erzwingt LF für Shell-Scripts. Windows-Checkouts mit CRLF brechen den Container (`cannot execute`).
-- **Zarr IO erwartet Tensors**: `io.write()` braucht `torch.Tensor`, nicht numpy arrays. Data Sources liefern `xr.DataArray` → `torch.from_numpy(da.values)`.
-- **Erststart langsam**: ~3-5 min weil 4 Uvicorn Workers + RQ Worker parallel alle ML-Module importieren (PyTorch, CUDA, earth2studio models).
-- **PyTorch SHMEM**: Container braucht `ipc: host` und `ulimits` (memlock, stack), sonst PyTorch-Fehler.
-- **SFNO/CuPy CUDA 13**: Container (nvcr.io/nvidia/pytorch:26.01) hat CUDA 13.1, CuPy sucht `libnvrtc.so.12`. SFNO-basierte Workflows (Cyclone Tracking) funktionieren nicht bis CuPy aktualisiert wird.
-- **FCN3/StormCast OOM**: `stormcast_fcn3_workflow` braucht mehr VRAM als eine einzelne Consumer-GPU bietet. Braucht ≥40 GB (A6000/H100).
-- **Cyclone Tracker Variablen**: TCTrackerWuDuan braucht `u850, v850, u10m, v10m, msl` (721 lat) — nur SFNO liefert das. FCN hat 720 lat, DLWP fehlen Wind-Vars.
-- **fetch_data → map_coords**: `fetch_data()` liefert GFS-Koordinaten (721 lat), aber FCN erwartet 720. Bei custom Workflows nach `fetch_data` immer `map_coords(x, coords, model.input_coords())` aufrufen.
-
-## Deployed Serve-Workflows
-
-| Workflow | Modell | Getestet |
-|----------|--------|----------|
-| `cams_analysis` | CAMS EU (0.1°, 6 Vars) | ja |
-| `cams_forecast` | CAMS_FX EU+Global | ja |
-| `ensemble_forecast` | FCN + SphericalGaussian | ja |
-| `precipitation_forecast` | FCN + PrecipitationAFNO | ja |
-| `corrdiff_taiwan` | CorrDiffTaiwan (3km) | ja |
-| `deterministic_earth2_workflow` | FCN/DLWP | ja |
-| `deterministic_fcn_workflow` | FCN | ja |
-| `deterministic_workflow` | FCN/DLWP + Plot | ja |
-| `diagnostic_workflow` | FCN/DLWP + PrecipAFNO + Plot | ja |
-| `stormcast_fcn3_workflow` | FCN3 + StormCast | OOM |
-| `example_user_workflow` | Warmup/Template | ja |
+- **CAMS/CDS Credentials**: `~/.cdsapirc` muss existieren (URL + Key von CDS). Im Container via Volume-Mount.
+- **Line Endings**: `.gitattributes` erzwingt LF fuer Shell-Scripts. Windows-Checkouts mit CRLF brechen den Container.
+- **Zarr IO erwartet Tensors**: `io.write()` braucht `torch.Tensor`, nicht numpy arrays.
+- **PyTorch SHMEM**: Container braucht `ipc: host` und `ulimits` (memlock, stack).
+- **fetch_data -> map_coords**: `fetch_data()` liefert GFS-Koordinaten (721 lat), aber FCN erwartet 720. Bei custom Workflows nach `fetch_data` immer `map_coords(x, coords, model.input_coords())` aufrufen.
 
 ## Client-SDK
 
@@ -76,19 +82,3 @@ from earth2studio_client import RemoteEarth2Workflow
 workflow = RemoteEarth2Workflow("http://localhost:8000", workflow_name="cams_analysis")
 ds = workflow(start_time=[datetime(2025, 6, 1)], preset="eu_surface").as_dataset()
 ```
-
-## Extras → Modelle
-
-| Extra | Modell/Feature |
-|-------|---------------|
-| `data` | CDS, CAMS, ARCO, GFS, HRRR Data Sources |
-| `serve` | REST API + RQ Workers |
-| `fcn3` | FourCastNet v3 |
-| `stormcast` | StormCast |
-| `dlwp` | DLWP-CS |
-| `sfno` | SFNO |
-| `pangu` | Pangu-Weather |
-| `atlas` | Atlas |
-| `corrdiff` | CorrDiff |
-| `cbottle` | CBottle |
-| `all` | Alles |

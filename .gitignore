@@ -107,13 +107,12 @@ docs/examples
 # Pytestmon
 .testmondata*
 
+.claude/agent-memory
+.claude/agents
+
 # Test artifacts
 _test_*.zarr/
 *.zarr.tmp/
 
 # Sphinx build logs
 docs/_sphinx_build.log
-
-# Fork-specific scratch files
-IMPLEMENTATION_VERIFICATION.md
-WORKFLOWS_SUMMARY.txt
