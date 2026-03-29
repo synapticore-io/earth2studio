@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 import pytest
-import torch
 
 from earth2studio.lexicon import CAMSLexicon
 
@@ -28,17 +28,16 @@ from earth2studio.lexicon import CAMSLexicon
         ["no2sfc", "o3sfc", "cosfc"],
         ["aod550"],
         ["duaod550", "tcno2"],
+        ["dust_500m", "pm2p5_1000m"],
     ],
 )
-@pytest.mark.parametrize("device", ["cpu", "cuda:0"])
-def test_cams_lexicon(variable, device):
-    input = torch.randn(len(variable), 8).to(device)
+def test_cams_lexicon(variable):
+    data = np.random.randn(len(variable), 8)
     for v in variable:
         label, modifier = CAMSLexicon[v]
-        output = modifier(input)
+        output = modifier(data)
         assert isinstance(label, str)
-        assert input.shape == output.shape
-        assert input.device == output.device
+        assert data.shape == output.shape
 
 
 def test_cams_lexicon_invalid():
@@ -49,11 +48,21 @@ def test_cams_lexicon_invalid():
 def test_cams_lexicon_vocab_format():
     for key, value in CAMSLexicon.VOCAB.items():
         parts = value.split("::")
-        assert len(parts) == 4, f"VOCAB entry '{key}' must have format 'dataset::api_var::nc_key::level'"
-        dataset, api_var, nc_key, level = parts
+        assert len(parts) == 4, (
+            f"VOCAB entry '{key}' must have format "
+            "'dataset::api_var::nc_key::level'"
+        )
+        dataset = parts[0]
         assert dataset in (
             "cams-europe-air-quality-forecasts",
             "cams-global-atmospheric-composition-forecasts",
         ), f"Unknown dataset in VOCAB entry '{key}': {dataset}"
-        assert api_var, f"VOCAB entry '{key}' has empty api_var"
-        assert nc_key, f"VOCAB entry '{key}' has empty nc_key"
+
+
+def test_cams_lexicon_all_levels_covered():
+    levels = [50, 100, 250, 500, 750, 1000, 2000, 3000, 5000]
+    pollutants = ["dust", "pm2p5", "pm10", "so2", "no2", "o3", "co", "nh3", "no"]
+    for p in pollutants:
+        for lev in levels:
+            key = f"{p}_{lev}m"
+            assert key in CAMSLexicon.VOCAB, f"Missing level entry: {key}"

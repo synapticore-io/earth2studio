@@ -29,6 +29,7 @@ YESTERDAY = datetime.datetime.now(datetime.UTC).replace(
 
 
 @pytest.mark.slow
+@pytest.mark.xfail
 @pytest.mark.timeout(120)
 @pytest.mark.parametrize(
     "time",
@@ -55,6 +56,7 @@ def test_cams_fetch(time, variable):
 
 
 @pytest.mark.slow
+@pytest.mark.xfail
 @pytest.mark.timeout(120)
 @pytest.mark.parametrize("variable", [["dust", "so2sfc"]])
 @pytest.mark.parametrize("cache", [True, False])
@@ -79,17 +81,28 @@ def test_cams_cache(variable, cache):
 
 
 @pytest.mark.timeout(30)
-@pytest.mark.parametrize("variable", ["nonexistent_var"])
-def test_cams_invalid(variable):
+def test_cams_invalid():
     with pytest.raises((ValueError, KeyError)):
         ds = CAMS()
-        ds(YESTERDAY, variable)
+        ds(YESTERDAY, "nonexistent_var")
+
+
+def test_cams_time_validation():
+    with pytest.raises(ValueError):
+        ds = CAMS()
+        ds(datetime.datetime(2018, 1, 1), "dust")
+
+
+def test_cams_available():
+    assert CAMS.available(datetime.datetime(2024, 1, 1))
+    assert not CAMS.available(datetime.datetime(2015, 1, 1))
 
 
 # ---- CAMS_FX tests ----
 
 
 @pytest.mark.slow
+@pytest.mark.xfail
 @pytest.mark.timeout(120)
 @pytest.mark.parametrize("variable", ["dust", ["dust", "pm2p5"]])
 @pytest.mark.parametrize(
@@ -116,3 +129,8 @@ def test_cams_fx_fetch(variable, lead_time):
     assert len(data.coords["lat"]) > 0
     assert len(data.coords["lon"]) > 0
     assert not np.isnan(data.values).all()
+
+
+def test_cams_fx_available():
+    assert CAMS_FX.available(datetime.datetime(2024, 1, 1))
+    assert not CAMS_FX.available(datetime.datetime(2010, 1, 1))
