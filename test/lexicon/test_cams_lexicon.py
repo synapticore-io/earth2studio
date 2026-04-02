@@ -17,24 +17,32 @@
 import numpy as np
 import pytest
 
-from earth2studio.lexicon import CAMSLexicon
+from earth2studio.lexicon import CAMSGlobalLexicon
 
 
 @pytest.mark.parametrize(
     "variable",
     [
-        ["dust"],
-        ["so2sfc", "pm2p5"],
-        ["no2sfc", "o3sfc", "cosfc"],
+        # Surface variables
+        ["u10m", "v10m", "t2m"],
+        ["d2m", "sp", "msl"],
+        ["tcwv", "tp", "tcc"],
+        # Aerosol optical depth
         ["aod550"],
         ["duaod550", "tcno2"],
-        ["dust_500m", "pm2p5_1000m"],
+        ["bcaod550", "ssaod550", "suaod550"],
+        # Trace gases
+        ["tcco", "tco3", "tcso2"],
+        ["omaod550"],
+        # Pressure level variables
+        ["u500", "v500", "t500"],
+        ["z850", "q700"],
     ],
 )
 def test_cams_lexicon(variable):
     data = np.random.randn(len(variable), 8)
     for v in variable:
-        label, modifier = CAMSLexicon[v]
+        label, modifier = CAMSGlobalLexicon[v]
         output = modifier(data)
         assert isinstance(label, str)
         assert data.shape == output.shape
@@ -42,27 +50,69 @@ def test_cams_lexicon(variable):
 
 def test_cams_lexicon_invalid():
     with pytest.raises(KeyError):
-        CAMSLexicon["nonexistent_variable"]
+        CAMSGlobalLexicon["nonexistent_variable"]
 
 
 def test_cams_lexicon_vocab_format():
-    for key, value in CAMSLexicon.VOCAB.items():
+    for key, value in CAMSGlobalLexicon.VOCAB.items():
         parts = value.split("::")
-        assert len(parts) == 4, (
-            f"VOCAB entry '{key}' must have format "
-            "'dataset::api_var::nc_key::level'"
-        )
-        dataset = parts[0]
-        assert dataset in (
-            "cams-europe-air-quality-forecasts",
-            "cams-global-atmospheric-composition-forecasts",
-        ), f"Unknown dataset in VOCAB entry '{key}': {dataset}"
+        assert (
+            len(parts) == 4
+        ), f"VOCAB entry '{key}' must have format 'dataset::api_var::nc_key::level'"
+        assert (
+            parts[0] == "cams-global-atmospheric-composition-forecasts"
+        ), f"Expected global dataset in VOCAB entry '{key}', got '{parts[0]}'"
 
 
-def test_cams_lexicon_all_levels_covered():
-    levels = [50, 100, 250, 500, 750, 1000, 2000, 3000, 5000]
-    pollutants = ["dust", "pm2p5", "pm10", "so2", "no2", "o3", "co", "nh3", "no"]
-    for p in pollutants:
-        for lev in levels:
-            key = f"{p}_{lev}m"
-            assert key in CAMSLexicon.VOCAB, f"Missing level entry: {key}"
+def test_cams_lexicon_surface_vars():
+    """Test that all expected surface variables are present."""
+    expected_surface = [
+        "u10m",
+        "v10m",
+        "t2m",
+        "d2m",
+        "sp",
+        "msl",
+        "tcwv",
+        "tp",
+        "skt",
+        "z",
+        "lsm",
+        "tcc",
+    ]
+    for var in expected_surface:
+        assert var in CAMSGlobalLexicon.VOCAB, f"Missing surface variable: {var}"
+
+
+def test_cams_lexicon_aod_vars():
+    """Test that all aerosol optical depth variables are present."""
+    expected_aod = [
+        "aod550",
+        "duaod550",
+        "omaod550",
+        "bcaod550",
+        "ssaod550",
+        "suaod550",
+    ]
+    for var in expected_aod:
+        assert var in CAMSGlobalLexicon.VOCAB, f"Missing AOD variable: {var}"
+
+
+def test_cams_lexicon_trace_gas_vars():
+    """Test that all trace gas variables are present."""
+    expected_gases = ["tcco", "tcno2", "tco3", "tcso2"]
+    for var in expected_gases:
+        assert var in CAMSGlobalLexicon.VOCAB, f"Missing trace gas variable: {var}"
+
+
+def test_cams_lexicon_pressure_level_vars():
+    """Test that pressure level variables are present for common levels."""
+    pressure_levels = [200, 250, 300, 400, 500, 600, 700, 850, 925, 1000]
+    variables = ["u", "v", "t", "z", "q"]
+
+    for var in variables:
+        for level in pressure_levels:
+            key = f"{var}{level}"
+            assert (
+                key in CAMSGlobalLexicon.VOCAB
+            ), f"Missing pressure level variable: {key}"
