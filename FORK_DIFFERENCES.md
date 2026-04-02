@@ -2,95 +2,76 @@
 
 Technical reference of differences from [NVIDIA/earth2studio](https://github.com/NVIDIA/earth2studio).
 
----
-
-## 1. DataSources
-
-### CAMS (`earth2studio/data/cams.py`) — **new**
-
-Two new DataSource classes for Copernicus Atmosphere Monitoring Service data via CDS API:
-
-| Class | Type | Grid | Coverage | Variables |
-|-------|------|------|----------|-----------|
-| `CAMS` | `DataSource` (Analysis) | 0.1° | Europe | dust, SO₂, PM2.5, PM10, NO₂, O₃, CO, NH₃, NO |
-| `CAMS_FX` | `ForecastSource` (Forecast) | 0.1° EU / 0.4° Global | EU + Global | EU surface + Global AOD/Column |
-
-Registered in `earth2studio/data/__init__.py`.
-
-### Upstream DataSources
-
-No changes to existing DataSources (GFS, HRRR, CDS, ARCO, IFS, etc.).
+Based on upstream `0.14.0a0`.
 
 ---
 
-## 2. Lexicon
+## Upstream Contributions
 
-### CAMSLexicon (`earth2studio/lexicon/cams.py`) — **new**
+The following were developed in this fork and merged upstream:
 
-Variable mapping following Earth2Studio convention (`<dataset>::<api_variable>::<netcdf_key>::<level>`).
-
-**EU Surface (level 0, 0.1° grid):** `dust`, `so2sfc`, `pm2p5`, `pm10`, `no2sfc`, `o3sfc`, `cosfc`, `nh3sfc`, `nosfc`
-
-**EU Multi-Level (50m–5000m):** all pollutants × 10 height levels (0, 50, 100, 250, 500, 750, 1000, 2000, 3000, 5000m). Examples: `dust_500m`, `pm2p5_1000m`, `so2_3000m`, `no2_250m`, `o3_5000m`, `co_1000m`
-
-**Global Column/AOD (0.4° grid):** `aod550`, `duaod550`, `omaod550`, `bcaod550`, `ssaod550`, `suaod550`, `tcco`, `tcno2`, `tco3`, `tcso2`, `gtco3`
-
-Registered in `earth2studio/lexicon/__init__.py`.
-
-### Upstream Lexicon
-
-No changes to existing Lexicon entries.
+| PR | Feature | Status |
+|----|---------|--------|
+| [#790](https://github.com/NVIDIA/earth2studio/pull/790) | CAMS Global FX DataSource + CAMSLexicon | **Merged** (2026-04-02) |
 
 ---
 
-## 3. Export Tooling
+## 1. Serve Workflows
 
-### `scripts/export_exr_sequence.py` — **new**
+Custom inference workflows in `serve/server/example_workflows/`:
 
-CAMS → EXR/PNG image sequence exporter for DCC and realtime engines (e.g. Unreal Engine, Blender, TouchDesigner).
-
-- Packs atmospheric variables into RGBA channels (R=Dust, G=PM2.5, B=SO₂, A=Dust@5km)
-- Optional: 3D volume export — multiple species × height levels as separate layers
-- Output: one frame per hour, normalized 0–1 float32 (EXR, 16-bit PNG fallback, NumPy)
-- Grid metadata (`grid_meta.npz`) for georeferenced post-processing
-
----
-
-## 4. Docker
-
-Uses upstream's `serve/Dockerfile` (NVIDIA PyTorch base image with GPU support). Fork changes:
-
-- `pip` → `uv` migration (no redundant pip upgrade, no curl uv install)
-- `apt` cache cleanup in same RUN layer
-- CAMS dependencies included via `[data]` extra in `pyproject.toml`
+| Workflow | Description |
+|----------|-------------|
+| `cams_workflow.py` | CAMS atmospheric composition analysis |
+| `corrdiff_workflow.py` | CorrDiff downscaling |
+| `cyclone_tracking_workflow.py` | Cyclone tracking with SFNO |
+| `precipitation_workflow.py` | Ensemble precipitation forecast |
+| `sfno_forecast_workflow.py` | SFNO deterministic forecast |
+| `stormcast_sda_workflow.py` | StormCast sequential data assimilation |
+| `stormscope_workflow.py` | StormScope nowcasting |
+| `temporal_interpolation_workflow.py` | Temporal interpolation between forecast steps |
+| + others | Aurora, CBottle, DLESyM, HealDA, ensemble, diagnostic |
 
 ---
 
-## 5. Fork Documentation
+## 2. Client SDK
 
-Files that only exist in this fork:
+Extended client SDK in `serve/client/` — adds `earth2studio_client` package with:
 
-| File | Content |
-|------|---------|
-| `ROADMAP.md` | Fork vision, sync strategy, phase plan |
-| `FORK_GUIDE.md` | Maintenance guide (upstream sync, branching, releases) |
-| `FORK_DIFFERENCES.md` | This document |
-| `LOCAL_DEPLOYMENT.md` | Offline/air-gapped deployment guide |
-| `GPU_OPTIMIZATION.md` | Consumer GPU tips |
-| `KNOWN_ISSUES.md` | Known problems + workarounds |
+- `RemoteEarth2Workflow` for programmatic workflow execution
+- Zarr chunk download support for large results
+- Examples for forecast, diagnostic, and downscaling use cases
+
+Registered as uv workspace member.
 
 ---
 
-## 6. Versioning & Sync
+## 3. Docker / Deployment
 
-- **Schema:** upstream tracking — `v0.12.0-fork.1`, `v0.12.0-fork.2`, etc.
-- **Sync frequency:** monthly or on upstream major releases
-- **Merge strategy:** full merge from `upstream/main`, manual conflict resolution in fork-specific modules
-- **Current status:** based on upstream `v0.12.0`
+- `serve/docker-compose.yml` — single-container stack (Redis, Uvicorn, RQ Workers in-container)
+- `serve/Dockerfile` — minor changes: `pip` → `uv`, apt cache cleanup
 
 ---
 
-## 7. What Has NOT Changed
+## 4. Remote Examples
+
+Client-side examples in `examples/remote/` demonstrating workflow execution against the serve API.
+
+---
+
+## 5. Windows Build Scripts
+
+Scripts in `scripts/` for building GRIB dependencies on Windows:
+
+| Script | Purpose |
+|--------|---------|
+| `build-eccodes-windows.ps1` | Build ecCodes from source |
+| `build-pygrib-wheels.ps1` | Build pygrib wheel |
+| `setup-windows-grib.ps1` | One-shot GRIB setup |
+
+---
+
+## 6. What Has NOT Changed
 
 - Prognostic Models (`earth2studio/models/px/`)
 - Diagnostic Models (`earth2studio/models/dx/`)
@@ -99,9 +80,16 @@ Files that only exist in this fork:
 - Statistics (`earth2studio/statistics/`)
 - Built-in Workflows (`earth2studio/run/`)
 - Existing DataSources and Lexicon entries
-- CI/CD Workflows (`.github/workflows/` — unchanged from upstream)
-- Tests (`test/`) — unchanged from upstream, CAMS tests pending
+- Tests (`test/`)
 
 ---
 
-**Last Updated:** 2026-03-12
+## 7. Sync Strategy
+
+- **Upstream remote:** `upstream` → `https://github.com/NVIDIA/earth2studio.git`
+- **Merge strategy:** `git fetch upstream main && git merge upstream/main`, manual conflict resolution
+- **Fork-Regel:** Upstream-Files nicht modifizieren. Eigene Additions in separaten Files. Nur `__init__.py` Imports und `pyproject.toml` Extras minimal patchen.
+
+---
+
+**Last Updated:** 2026-04-02
